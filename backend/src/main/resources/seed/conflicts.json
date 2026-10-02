@@ -1,0 +1,6 @@
+[
+ {
+  "vehicleLabel": "RE-04 (Dry-Box Truck)",
+  "message": "Error: Assigned WP-8823 requires chilled temperature compartment, but RE-04 is ambient only."
+ }
+]

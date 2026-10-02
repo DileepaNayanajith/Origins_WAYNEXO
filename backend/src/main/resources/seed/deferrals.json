@@ -1,0 +1,77 @@
+[
+ {
+  "order": "WP-8823",
+  "reason": "No refrigerated vehicle",
+  "impact": "HIGH",
+  "consecutiveSkips": 2,
+  "note": "Re-routing available fleet. RE-01 prioritized for Gampaha tomorrow."
+ },
+ {
+  "order": "WP-8829",
+  "reason": "Capacity exceeded",
+  "impact": "MEDIUM",
+  "consecutiveSkips": 1,
+  "note": "Dry-box fleet capacity fully utilized with seasonal peak load."
+ },
+ {
+  "order": "WP-8831",
+  "reason": "Fuel quota reached",
+  "impact": "MEDIUM",
+  "consecutiveSkips": 1,
+  "note": "Peliyagoda weekly diesel allocations exhausted for DB-05."
+ },
+ {
+  "order": "WP-8834",
+  "reason": "Refrigerated capacity exhausted",
+  "impact": "HIGH",
+  "consecutiveSkips": 1,
+  "note": ""
+ },
+ {
+  "order": "WP-8836",
+  "reason": "Heavy item, no suitable vehicle",
+  "impact": "MEDIUM",
+  "consecutiveSkips": 1,
+  "note": ""
+ },
+ {
+  "order": "WP-8838",
+  "reason": "Delivery window cannot be met",
+  "impact": "MEDIUM",
+  "consecutiveSkips": 1,
+  "note": ""
+ },
+ {
+  "order": "WP-8840",
+  "reason": "Outlet access restriction",
+  "impact": "LOW",
+  "consecutiveSkips": 1,
+  "note": ""
+ },
+ {
+  "order": "ORD-88421",
+  "reason": "Peliyagoda logistics capacity exceeded on chilled box fleets. Waypoint daily dispatch prioritised emergency stock.",
+  "impact": "HIGH",
+  "consecutiveSkips": 1,
+  "note": "Moved to the next available early dispatch, before 08:00 AM.",
+  "rescheduledOffset": 1,
+  "rescheduledWindow": "Before 08:00 AM",
+  "storeFacing": true
+ },
+ {
+  "order": "ORD-86510",
+  "reason": "Chilled fleet maintenance",
+  "impact": "LOW",
+  "consecutiveSkips": 1,
+  "note": "Rescheduled +24h",
+  "resolved": true
+ },
+ {
+  "order": "ORD-81014",
+  "reason": "Window cannot be met",
+  "impact": "LOW",
+  "consecutiveSkips": 1,
+  "note": "Rescheduled +12h",
+  "resolved": true
+ }
+]

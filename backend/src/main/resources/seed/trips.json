@@ -1,0 +1,438 @@
+[
+ {
+  "vehicle": "RE-04",
+  "driver": "suresh",
+  "number": 1,
+  "name": "Colombo Fresh",
+  "departs": "05:30",
+  "distanceKm": 18,
+  "status": "LOADING",
+  "allocatedKg": 5450,
+  "allocatedM3": 34.2,
+  "stops": [
+   {
+    "seq": 1,
+    "outlet": "OUT005",
+    "window": "05:30 - 06:15",
+    "eta": "05:50",
+    "status": "UPCOMING",
+    "cargo": "Ambient groceries & deep frozen meat",
+    "itemsLabel": "40 items",
+    "loadMode": "CHILLED & FREEZER",
+    "items": [
+     [
+      "SKU-FRESH-992",
+      "Frozen Chicken Breast Crates (10kg)",
+      "FROZEN",
+      12,
+      "Crates",
+      12,
+      "GOOD"
+     ],
+     [
+      "SKU-FRESH-301",
+      "Chilled Fresh Milk Bottles (1L x 12)",
+      "CHILLED",
+      8,
+      "Cases",
+      7,
+      "SHORT"
+     ],
+     [
+      "SKU-FRESH-122",
+      "Heinz Tomato Ketchup Case",
+      "AMBIENT",
+      10,
+      "Cases",
+      10,
+      "GOOD"
+     ],
+     [
+      "SKU-FRESH-454",
+      "Premium Basmati Rice Bag (5kg)",
+      "AMBIENT",
+      10,
+      "Bags",
+      9,
+      "DAMAGED"
+     ]
+    ]
+   },
+   {
+    "seq": 2,
+    "outlet": "OUT006",
+    "window": "06:00 - 06:45",
+    "eta": "06:20",
+    "status": "UPCOMING",
+    "cargo": "Fresh dairy & chilled food",
+    "itemsLabel": "8 crates",
+    "loadMode": "REEFER MODE",
+    "items": [
+     [
+      "SKU-FRESH-302",
+      "Organic Pasteurised Milk (1L)",
+      "CHILLED",
+      48,
+      "Bottles"
+     ],
+     [
+      "SKU-FRESH-620",
+      "Greek Style Yogurt (500g)",
+      "CHILLED",
+      24,
+      "Packs"
+     ]
+    ]
+   },
+   {
+    "seq": 3,
+    "outlet": "OUT004",
+    "window": "07:00 - 07:45",
+    "eta": "07:20",
+    "status": "UPCOMING",
+    "cargo": "Chilled dairy & fresh produce",
+    "itemsLabel": "12 crates",
+    "loadMode": "REEFER MODE",
+    "bay": "Rear Dock Area (Vans/M-Trucks)",
+    "note": "Gate locks promptly at 10:00 AM. Ring bell for security officer Sunil to obtain entry permit.",
+    "order": "ORD-88319",
+    "items": [
+     [
+      "SKU-FRESH-410",
+      "Chilled Butter Salted (100g)",
+      "CHILLED",
+      40,
+      "Cases"
+     ],
+     [
+      "SKU-FRESH-301",
+      "Fresh Milk 1L Pasteurised",
+      "CHILLED",
+      120,
+      "Bottles"
+     ],
+     [
+      "CRATE-RET",
+      "Waypoint Insulated Crates",
+      "AMBIENT",
+      12,
+      "Empty Return"
+     ]
+    ]
+   },
+   {
+    "seq": 4,
+    "outlet": "OUT007",
+    "window": "07:15 - 08:00",
+    "eta": "07:40",
+    "status": "UPCOMING",
+    "cargo": "Chilled dairy crates & fresh vegetables",
+    "itemsLabel": "24 items",
+    "loadMode": "REEFER MODE",
+    "items": [
+     [
+      "SKU-FRESH-305",
+      "Farm Eggs (Tray of 30)",
+      "CHILLED",
+      12,
+      "Trays"
+     ],
+     [
+      "SKU-FRESH-411",
+      "Salted Butter Blocks (200g)",
+      "CHILLED",
+      12,
+      "Packs"
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "vehicle": "RE-04",
+  "driver": "suresh",
+  "number": 2,
+  "name": "Negombo Suburbs",
+  "departs": "14:00",
+  "distanceKm": 52,
+  "status": "PLANNED",
+  "allocatedKg": 3900,
+  "allocatedM3": 22.5,
+  "stops": [
+   {
+    "seq": 1,
+    "outlet": "OUT003",
+    "window": "14:45 - 15:30",
+    "eta": "15:00",
+    "status": "UPCOMING",
+    "cargo": "Fresh grocery replenishment",
+    "itemsLabel": "18 items",
+    "loadMode": "REEFER MODE",
+    "items": []
+   },
+   {
+    "seq": 2,
+    "outlet": "OUT002",
+    "window": "15:30 - 16:15",
+    "eta": "15:40",
+    "status": "UPCOMING",
+    "cargo": "Fresh grocery replenishment",
+    "itemsLabel": "14 items",
+    "loadMode": "REEFER MODE",
+    "items": []
+   },
+   {
+    "seq": 3,
+    "outlet": "OUT008",
+    "window": "16:00 - 16:45",
+    "eta": "16:20",
+    "status": "UPCOMING",
+    "cargo": "Fresh grocery replenishment",
+    "itemsLabel": "20 items",
+    "loadMode": "REEFER MODE",
+    "items": []
+   },
+   {
+    "seq": 4,
+    "outlet": "OUT001",
+    "window": "16:30 - 17:15",
+    "eta": "16:50",
+    "status": "UPCOMING",
+    "cargo": "Fresh grocery replenishment",
+    "itemsLabel": "16 items",
+    "loadMode": "REEFER MODE",
+    "items": []
+   }
+  ]
+ },
+ {
+  "vehicle": "VAN-23",
+  "driver": null,
+  "number": 1,
+  "name": "Colombo Style Loop",
+  "departs": "06:30",
+  "distanceKm": 24,
+  "status": "WAITING",
+  "allocatedKg": 990,
+  "allocatedM3": 6.8,
+  "stops": [
+   {
+    "seq": 1,
+    "outlet": "OUT105",
+    "window": "9 AM - 1 PM",
+    "eta": "09:10",
+    "status": "UPCOMING",
+    "cargo": "Apparel cartons",
+    "itemsLabel": "6 items",
+    "loadMode": "AMBIENT",
+    "items": []
+   },
+   {
+    "seq": 2,
+    "outlet": "OUT102",
+    "window": "9 AM - 1 PM",
+    "eta": "09:40",
+    "status": "UPCOMING",
+    "cargo": "Apparel cartons",
+    "itemsLabel": "5 items",
+    "loadMode": "AMBIENT",
+    "items": []
+   },
+   {
+    "seq": 3,
+    "outlet": "OUT101",
+    "window": "9 AM - 1 PM",
+    "eta": "10:30",
+    "status": "UPCOMING",
+    "cargo": "Apparel cartons",
+    "itemsLabel": "6 items",
+    "loadMode": "AMBIENT",
+    "items": []
+   },
+   {
+    "seq": 4,
+    "outlet": "OUT103",
+    "window": "9 AM - 1 PM",
+    "eta": "11:20",
+    "status": "UPCOMING",
+    "cargo": "Apparel cartons",
+    "itemsLabel": "5 items",
+    "loadMode": "AMBIENT",
+    "items": []
+   },
+   {
+    "seq": 5,
+    "outlet": "OUT104",
+    "window": "9 AM - 1 PM",
+    "eta": "12:00",
+    "status": "UPCOMING",
+    "cargo": "Apparel cartons",
+    "itemsLabel": "5 items",
+    "loadMode": "AMBIENT",
+    "items": []
+   },
+   {
+    "seq": 6,
+    "outlet": "OUT106",
+    "window": "9 AM - 1 PM",
+    "eta": "12:40",
+    "status": "UPCOMING",
+    "cargo": "Apparel cartons",
+    "itemsLabel": "5 items",
+    "loadMode": "AMBIENT",
+    "items": []
+   }
+  ]
+ },
+ {
+  "vehicle": "TRK-15",
+  "driver": null,
+  "number": 1,
+  "name": "Kandy Fresh",
+  "departs": "07:00",
+  "distanceKm": 116,
+  "status": "WAITING",
+  "allocatedKg": 0,
+  "allocatedM3": 0,
+  "stops": [
+   {
+    "seq": 1,
+    "outlet": "OUT010",
+    "window": "Before 11 AM",
+    "eta": "09:40",
+    "status": "UPCOMING",
+    "cargo": "Fresh grocery replenishment",
+    "itemsLabel": "4 items",
+    "loadMode": "REEFER MODE",
+    "items": []
+   },
+   {
+    "seq": 2,
+    "outlet": "OUT114",
+    "window": "Before 11 AM",
+    "eta": "10:10",
+    "status": "UPCOMING",
+    "cargo": "Fresh grocery replenishment",
+    "itemsLabel": "4 items",
+    "loadMode": "REEFER MODE",
+    "items": []
+   },
+   {
+    "seq": 3,
+    "outlet": "OUT111",
+    "window": "Before 11 AM",
+    "eta": "10:40",
+    "status": "UPCOMING",
+    "cargo": "Fresh grocery replenishment",
+    "itemsLabel": "4 items",
+    "loadMode": "REEFER MODE",
+    "items": []
+   }
+  ]
+ },
+ {
+  "vehicle": "VAN-05",
+  "driver": null,
+  "number": 1,
+  "name": "Colombo South Fresh",
+  "departs": "05:00",
+  "distanceKm": 21,
+  "status": "LOADED",
+  "allocatedKg": 1730,
+  "allocatedM3": 10.0,
+  "stops": [
+   {
+    "seq": 1,
+    "outlet": "OUT200",
+    "window": "Before 8 AM",
+    "eta": "05:40",
+    "status": "UPCOMING",
+    "cargo": "Fresh grocery replenishment",
+    "itemsLabel": "3 items",
+    "loadMode": "REEFER MODE",
+    "items": []
+   },
+   {
+    "seq": 2,
+    "outlet": "OUT201",
+    "window": "Before 8 AM",
+    "eta": "06:05",
+    "status": "UPCOMING",
+    "cargo": "Fresh grocery replenishment",
+    "itemsLabel": "3 items",
+    "loadMode": "REEFER MODE",
+    "items": []
+   },
+   {
+    "seq": 3,
+    "outlet": "OUT202",
+    "window": "Before 8 AM",
+    "eta": "06:30",
+    "status": "UPCOMING",
+    "cargo": "Fresh grocery replenishment",
+    "itemsLabel": "3 items",
+    "loadMode": "REEFER MODE",
+    "items": []
+   },
+   {
+    "seq": 4,
+    "outlet": "OUT203",
+    "window": "Before 8 AM",
+    "eta": "06:55",
+    "status": "UPCOMING",
+    "cargo": "Fresh grocery replenishment",
+    "itemsLabel": "3 items",
+    "loadMode": "REEFER MODE",
+    "items": []
+   },
+   {
+    "seq": 5,
+    "outlet": "OUT204",
+    "window": "Before 8 AM",
+    "eta": "07:20",
+    "status": "UPCOMING",
+    "cargo": "Fresh grocery replenishment",
+    "itemsLabel": "2 items",
+    "loadMode": "REEFER MODE",
+    "items": []
+   }
+  ]
+ },
+ {
+  "vehicle": "RE-02",
+  "driver": null,
+  "number": 1,
+  "name": "Colombo-Fresh-01",
+  "departs": "05:15",
+  "distanceKm": 22,
+  "status": "ACTIVE",
+  "allocatedKg": 3800,
+  "allocatedM3": 11.0,
+  "stops": [
+   {
+    "seq": 1,
+    "outlet": "OUT005",
+    "window": "05:30 - 06:15",
+    "eta": "05:50",
+    "status": "COMPLETED",
+    "items": []
+   },
+   {
+    "seq": 2,
+    "outlet": "OUT006",
+    "window": "06:00 - 06:45",
+    "eta": "06:20",
+    "status": "COMPLETED",
+    "items": []
+   },
+   {
+    "seq": 3,
+    "outlet": "OUT004",
+    "window": "07:00 - 07:15",
+    "eta": "07:20",
+    "status": "CURRENT",
+    "items": []
+   }
+  ]
+ }
+]

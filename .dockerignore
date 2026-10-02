@@ -1,0 +1,10 @@
+**/node_modules
+**/dist
+**/target
+backend/data
+docs
+tools
+figma-exporter
+WAYNEXO.zip
+*.log
+.git

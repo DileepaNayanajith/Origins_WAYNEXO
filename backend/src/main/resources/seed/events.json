@@ -1,0 +1,46 @@
+[
+ {
+  "kind": "ALERT",
+  "severity": "CRITICAL",
+  "title": "Colombo 03 outlet restriction:",
+  "message": "Van-only access detected. Re-route required.",
+  "minutesAgo": 12
+ },
+ {
+  "kind": "ALERT",
+  "severity": "WARNING",
+  "title": "Chilled temperature issue:",
+  "message": "Vehicle RE-04 temperature reported at -2°C (Fresh required at 2-8°C).",
+  "minutesAgo": 25
+ },
+ {
+  "kind": "ALERT",
+  "severity": "INFO",
+  "title": "Cutoff Alert:",
+  "message": "Negombo Fresh delivery slot fully allocated for tomorrow dispatch.",
+  "minutesAgo": 40
+ },
+ {
+  "kind": "DRIVER_FEED",
+  "severity": "CRITICAL",
+  "actor": "SUNIL",
+  "vehicle": "RE-01",
+  "message": "Outlet inaccessible by dry box truck. Need small van dispatcher re-route.",
+  "minutesAgo": 10
+ },
+ {
+  "kind": "DRIVER_FEED",
+  "severity": "INFO",
+  "actor": "AMILA",
+  "vehicle": "VN-04",
+  "message": "Fresh delivery confirmed at Wattala Main with chilled temp compliance.",
+  "minutesAgo": 60
+ },
+ {
+  "kind": "DOCK_ALERT",
+  "severity": "CRITICAL",
+  "title": "",
+  "message": "3 Refrigerated trucks arriving at Dock 4. Pre-cool mandated.",
+  "minutesAgo": 5
+ }
+]

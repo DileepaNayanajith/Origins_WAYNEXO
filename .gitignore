@@ -1,0 +1,9 @@
+node_modules/
+dist/
+target/
+backend/data/
+*.log
+.DS_Store
+.idea/
+WAYNEXO.zip
+frontend/.env

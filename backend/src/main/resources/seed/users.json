@@ -1,0 +1,59 @@
+[
+ {
+  "username": "harsha",
+  "employeeId": "WP-001",
+  "email": "harsha.perera@waynexo.lk",
+  "password": "dispatch123",
+  "fullName": "Harsha Perera",
+  "role": "DISPATCHER",
+  "title": "Lead Dispatcher",
+  "depot": "PLG",
+  "avatar": "harsha"
+ },
+ {
+  "username": "nimal",
+  "employeeId": "WP-5104",
+  "email": "nimal.silva@keells.com",
+  "password": "store123",
+  "fullName": "Nimal Silva",
+  "role": "STORE_MANAGER",
+  "title": "Store Manager",
+  "depot": "PLG",
+  "outlet": "OUT004",
+  "avatar": "nimal"
+ },
+ {
+  "username": "suresh",
+  "employeeId": "WP-9042",
+  "email": "suresh.j@waynexo.lk",
+  "password": "driver123",
+  "fullName": "Suresh Jayasinghe",
+  "role": "DRIVER",
+  "title": "Driver",
+  "depot": "PLG",
+  "vehicle": "RE-04",
+  "avatar": null
+ },
+ {
+  "username": "kasun",
+  "employeeId": "WP-042",
+  "email": "kasun.f@waynexo.lk",
+  "password": null,
+  "fullName": "Kasun Fernando",
+  "role": "LOADER",
+  "title": "Dock Loader",
+  "depot": "PLG",
+  "avatar": "kasun"
+ },
+ {
+  "username": "ruwan",
+  "employeeId": "WP-077",
+  "email": "ruwan.k@waynexo.lk",
+  "password": null,
+  "fullName": "Ruwan Karunaratne",
+  "role": "LOADER",
+  "title": "Dock Loader",
+  "depot": "KDY",
+  "avatar": null
+ }
+]

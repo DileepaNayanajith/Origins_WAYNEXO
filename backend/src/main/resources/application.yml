@@ -1,0 +1,29 @@
+server:
+  # Railway/Render inject PORT
+  port: ${PORT:8080}
+
+spring:
+  application:
+    name: waynexo
+  datasource:
+    url: jdbc:mysql://${DB_HOST:${MYSQLHOST:localhost}}:${DB_PORT:${MYSQLPORT:3306}}/${DB_NAME:${MYSQLDATABASE:waynexo}}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Colombo
+    username: ${DB_USER:${MYSQLUSER:root}}
+    password: ${DB_PASSWORD:${MYSQLPASSWORD:root}}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: true
+    properties:
+      hibernate.jdbc.time_zone: Asia/Colombo
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+waynexo:
+  zone: Asia/Colombo
+  # Change this secret in production (any long random string)
+  jwt-secret: ${JWT_SECRET:waynexo-dev-secret-change-me-please-0123456789}
+  jwt-hours: 12
+  # Re-create demo data on every start (handy before a demo)
+  reseed: ${WAYNEXO_RESEED:false}
+  cors-origins: ${CORS_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}

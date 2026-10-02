@@ -1,0 +1,178 @@
+[
+ {
+  "sku": "SKU-FRESH-410",
+  "name": "Chilled Butter Salted (100g)",
+  "category": "CHILLED_PRODUCE",
+  "tempClass": "CHILLED",
+  "price": 1200,
+  "unit": "pack",
+  "frequent": true,
+  "unitWeightKg": 0.12,
+  "unitVolumeM3": 0.0002
+ },
+ {
+  "sku": "SKU-FRESH-301",
+  "name": "Fresh Milk 1L Pasteurised",
+  "category": "CHILLED_PRODUCE",
+  "tempClass": "CHILLED",
+  "price": 450,
+  "unit": "bottle",
+  "frequent": true,
+  "unitWeightKg": 1.05,
+  "unitVolumeM3": 0.0012
+ },
+ {
+  "sku": "SKU-FRESH-411",
+  "name": "Salted Butter Blocks (200g)",
+  "category": "CHILLED_PRODUCE",
+  "tempClass": "CHILLED",
+  "price": 820,
+  "unit": "unit",
+  "frequent": true,
+  "unitWeightKg": 0.22,
+  "unitVolumeM3": 0.0003
+ },
+ {
+  "sku": "SKU-FRESH-995",
+  "name": "Chilled Chicken Fillet (1kg)",
+  "category": "CHILLED_PRODUCE",
+  "tempClass": "CHILLED",
+  "price": 1800,
+  "unit": "kg",
+  "frequent": true,
+  "unitWeightKg": 1.0,
+  "unitVolumeM3": 0.0015
+ },
+ {
+  "sku": "SKU-FRESH-512",
+  "name": "Cheddar Cheese Blocks (1kg)",
+  "category": "CHILLED_PRODUCE",
+  "tempClass": "CHILLED",
+  "price": 3400,
+  "unit": "block",
+  "frequent": true,
+  "unitWeightKg": 1.0,
+  "unitVolumeM3": 0.0011
+ },
+ {
+  "sku": "SKU-FRESH-620",
+  "name": "Greek Style Yogurt (500g)",
+  "category": "CHILLED_PRODUCE",
+  "tempClass": "CHILLED",
+  "price": 550,
+  "unit": "pack",
+  "frequent": true,
+  "unitWeightKg": 0.52,
+  "unitVolumeM3": 0.0006
+ },
+ {
+  "sku": "SKU-FRESH-101",
+  "name": "Fresh Strawberries (500g)",
+  "category": "CHILLED_PRODUCE",
+  "tempClass": "CHILLED",
+  "price": 1200,
+  "unit": "pack",
+  "frequent": false,
+  "unitWeightKg": 0.5,
+  "unitVolumeM3": 0.0015
+ },
+ {
+  "sku": "SKU-FRESH-302",
+  "name": "Organic Pasteurised Milk (1L)",
+  "category": "DAIRY_EGGS",
+  "tempClass": "CHILLED",
+  "price": 450,
+  "unit": "bottle",
+  "frequent": true,
+  "unitWeightKg": 1.05,
+  "unitVolumeM3": 0.0012
+ },
+ {
+  "sku": "SKU-FRESH-305",
+  "name": "Farm Eggs (Tray of 30)",
+  "category": "DAIRY_EGGS",
+  "tempClass": "CHILLED",
+  "price": 1650,
+  "unit": "tray",
+  "frequent": true,
+  "unitWeightKg": 1.9,
+  "unitVolumeM3": 0.004
+ },
+ {
+  "sku": "SKU-FRESH-621",
+  "name": "Vanilla Yogurt (80g)",
+  "category": "DAIRY_EGGS",
+  "tempClass": "CHILLED",
+  "price": 90,
+  "unit": "cup",
+  "frequent": true,
+  "unitWeightKg": 0.085,
+  "unitVolumeM3": 0.0001
+ },
+ {
+  "sku": "SKU-FRESH-122",
+  "name": "Heinz Tomato Ketchup Case",
+  "category": "DRY_GOODS",
+  "tempClass": "AMBIENT",
+  "price": 4800,
+  "unit": "case",
+  "frequent": false,
+  "unitWeightKg": 6.5,
+  "unitVolumeM3": 0.008
+ },
+ {
+  "sku": "SKU-FRESH-454",
+  "name": "Premium Basmati Rice Bag (5kg)",
+  "category": "DRY_GOODS",
+  "tempClass": "AMBIENT",
+  "price": 2900,
+  "unit": "bag",
+  "frequent": true,
+  "unitWeightKg": 5.0,
+  "unitVolumeM3": 0.007
+ },
+ {
+  "sku": "SKU-FRESH-458",
+  "name": "Red Lentils (1kg)",
+  "category": "DRY_GOODS",
+  "tempClass": "AMBIENT",
+  "price": 420,
+  "unit": "pack",
+  "frequent": true,
+  "unitWeightKg": 1.0,
+  "unitVolumeM3": 0.0012
+ },
+ {
+  "sku": "SKU-FRESH-701",
+  "name": "Sandwich Bread Loaf",
+  "category": "BAKERY",
+  "tempClass": "AMBIENT",
+  "price": 260,
+  "unit": "loaf",
+  "frequent": true,
+  "unitWeightKg": 0.45,
+  "unitVolumeM3": 0.002
+ },
+ {
+  "sku": "SKU-FRESH-702",
+  "name": "Butter Croissant (6 pack)",
+  "category": "BAKERY",
+  "tempClass": "AMBIENT",
+  "price": 1100,
+  "unit": "pack",
+  "frequent": false,
+  "unitWeightKg": 0.36,
+  "unitVolumeM3": 0.002
+ },
+ {
+  "sku": "SKU-FRESH-992",
+  "name": "Frozen Chicken Breast Crates (10kg)",
+  "category": "CHILLED_PRODUCE",
+  "tempClass": "FROZEN",
+  "price": 18500,
+  "unit": "crate",
+  "frequent": false,
+  "unitWeightKg": 10.5,
+  "unitVolumeM3": 0.03
+ }
+]

@@ -1,0 +1,22 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "WAYNEXO Backend (MySQL)",
+      "request": "launch",
+      "mainClass": "com.waynexo.WaynexoApplication",
+      "projectName": "waynexo-backend",
+      "cwd": "${workspaceFolder}/backend"
+    },
+    {
+      "type": "java",
+      "name": "WAYNEXO Backend (H2 – no MySQL needed)",
+      "request": "launch",
+      "mainClass": "com.waynexo.WaynexoApplication",
+      "projectName": "waynexo-backend",
+      "cwd": "${workspaceFolder}/backend",
+      "args": "--spring.profiles.active=h2"
+    }
+  ]
+}

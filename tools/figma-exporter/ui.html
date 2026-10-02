@@ -1,0 +1,26 @@
+<div style="font:13px Inter,system-ui,sans-serif;padding:16px">
+  <b style="font-size:15px">WAYNEXO Exporter</b>
+  <p id="s" style="color:#555">Starting…</p>
+  <button id="dl" disabled style="background:#e8453c;color:#fff;border:0;border-radius:8px;padding:10px 14px;font-weight:600;cursor:pointer">Download waynexo-figma-export.json</button>
+  <p style="color:#888;font-size:11px">Read-only: this plugin does not change your design.</p>
+</div>
+<script>
+  let data = null;
+  const s = document.getElementById('s'), dl = document.getElementById('dl');
+  onmessage = (e) => {
+    const m = e.data.pluginMessage;
+    if (m.type === 'progress') s.textContent = m.text;
+    if (m.type === 'error') { s.textContent = 'Error: ' + m.text; s.style.color = '#c00'; }
+    if (m.type === 'done') {
+      data = m.json;
+      s.textContent = `Done — ${m.frames} screens, ${m.nodes} layers (${(data.length/1048576).toFixed(1)} MB).`;
+      dl.disabled = false;
+    }
+  };
+  dl.onclick = () => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
+    a.download = 'waynexo-figma-export.json';
+    document.body.appendChild(a); a.click(); a.remove();
+  };
+</script>
