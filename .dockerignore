@@ -5,6 +5,7 @@ backend/data
 docs
 tools
 figma-exporter
-WAYNEXO.zip
+WAYNEXO*.zip
 *.log
 .git
+.vscode

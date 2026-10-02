@@ -45,10 +45,27 @@ Open on other devices in the same Wi-Fi with `http://<your-mac-ip>:5173` (phone 
 
 ### Production build (single server)
 ```bash
-cd frontend && npm run build
-cp -r dist/* ../backend/src/main/resources/static/
+cd frontend && npm run build:backend      # builds React into backend/src/main/resources/static
 cd ../backend && mvn package && java -jar target/waynexo-backend-1.0.0.jar
 ```
+The repo already contains a pre-built copy of the frontend in `backend/src/main/resources/static`,
+so the backend alone serves the whole site at http://localhost:8080.
+
+## Deploy to Railway
+
+**Option A — Dockerfile (recommended, builds frontend + backend):**
+1. Push this folder to GitHub (the `Dockerfile` and `railway.json` must be in the repo root).
+2. Railway → New Project → Deploy from GitHub repo.
+3. + Create → Database → **MySQL**. In the app service → Variables → *Add Reference*:
+   `MYSQLHOST`, `MYSQLPORT`, `MYSQLDATABASE`, `MYSQLUSER`, `MYSQLPASSWORD` (or just `MYSQL_URL`). Add `JWT_SECRET`.
+4. Settings → Networking → Generate Domain.
+
+**Option B — no Docker:** Settings → Source → **Root Directory = `backend`**. Railway builds the Maven
+project directly and serves the pre-built frontend.
+
+If no MySQL is linked yet, the app still starts on Railway with an embedded demo database
+(data resets on every redeploy) — link MySQL for permanent data.
+Health check: `GET /api/public/login-options`.
 
 VS Code: open the `WAYNEXO` folder → Run & Debug → **"WAYNEXO Backend (H2 – no MySQL needed)"**.
 
