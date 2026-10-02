@@ -65,6 +65,7 @@ public class AuthController {
     }
 
     @GetMapping("/auth/me")
+    @Transactional(readOnly = true)
     public UserDto me() {
         return Mapper.user(auth.user());
     }

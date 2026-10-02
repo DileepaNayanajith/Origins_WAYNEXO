@@ -45,7 +45,7 @@ public class AuthInterceptor implements HandlerInterceptor {
                 throw ApiException.forbidden("This area is not available for the " + user.getRole().name().replace('_', ' ').toLowerCase() + " role");
             }
         }
-        request.setAttribute(AuthContext.ATTR, user);
+        request.setAttribute(AuthContext.ATTR, user.getId());
         return true;
     }
 }
