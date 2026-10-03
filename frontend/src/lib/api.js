@@ -27,7 +27,8 @@ async function request(method, path, body) {
   try { data = text ? JSON.parse(text) : null } catch { data = text }
   if (!res.ok) {
     if (res.status === 401) { tokenStore.set(null); window.dispatchEvent(new Event('waynexo:logout')) }
-    throw new ApiError(res.status, (data && data.message) || res.statusText, data)
+    const message = (data && data.message) || (typeof data === 'string' && data.trim()) || res.statusText || `Request failed (${res.status})`
+    throw new ApiError(res.status, message, data)
   }
   return data
 }

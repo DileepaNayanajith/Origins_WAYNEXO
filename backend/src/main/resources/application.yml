@@ -1,4 +1,6 @@
 server:
+  # Railway terminates HTTPS before forwarding requests to Spring Boot.
+  forward-headers-strategy: framework
   # Railway / Render inject PORT
   port: ${PORT:8080}
   compression:
