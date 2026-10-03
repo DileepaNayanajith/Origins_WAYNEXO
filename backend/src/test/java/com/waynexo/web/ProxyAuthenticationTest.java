@@ -14,7 +14,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
     "spring.datasource.url=jdbc:h2:mem:proxy-auth;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
     "spring.datasource.username=sa", "spring.datasource.password=",
-    "spring.jpa.hibernate.ddl-auto=create-drop"
+    "spring.jpa.hibernate.ddl-auto=create-drop", "waynexo.demo-seed=true",
+    "waynexo.jwt-secret=proxy-test-only-secret-at-least-32-characters"
 })
 class ProxyAuthenticationTest {
     @Autowired TestRestTemplate client;
@@ -37,14 +38,14 @@ class ProxyAuthenticationTest {
     @Test
     void browserCanLoginAndUseTokenBehindHttpsProxyForEveryRole() {
         String[][] accounts = {
-            {"harsha.perera@waynexo.lk", "dispatch123", "DISPATCHER", "DISPATCHER", "/dispatcher/overview"},
-            {"nimal.silva@keells.com", "store123", "STORE", "STORE_MANAGER", "/store/catalog"},
-            {"WP-9042", "driver123", "DRIVER", "DRIVER", "/driver/home"},
-            {"WP-042", "", "LOADER", "LOADER", "/loader/queue"}
+            {"harsha", "dispatch123", "DISPATCHER", "DISPATCHER", "/dispatcher/overview"},
+            {"nimal", "store123", "STORE", "STORE_MANAGER", "/store/catalog"},
+            {"suresh", "driver123", "DRIVER", "DRIVER", "/driver/home"},
+            {"kasun", "demo-loader123", "LOADER", "LOADER", "/loader/queue"}
         };
         for (String[] account : accounts) {
             HttpHeaders headers = proxyHeaders("https://waynexo.example");
-            String body = "{\"identifier\":\"%s\",\"password\":\"%s\",\"portal\":\"%s\"}"
+            String body = "{\"username\":\"%s\",\"password\":\"%s\",\"portal\":\"%s\"}"
                     .formatted(account[0], account[1], account[2]);
             ResponseEntity<JsonNode> login = client.exchange("/api/auth/login", HttpMethod.POST,
                     new HttpEntity<>(body, headers), JsonNode.class);
@@ -68,9 +69,9 @@ class ProxyAuthenticationTest {
     @Test
     void wrongPasswordStillReturnsUnauthorizedWithMessage() {
         ResponseEntity<JsonNode> response = client.exchange("/api/auth/login", HttpMethod.POST,
-                new HttpEntity<>("{\"identifier\":\"nimal.silva@keells.com\",\"password\":\"wrong\",\"portal\":\"STORE\"}",
+                new HttpEntity<>("{\"username\":\"nimal\",\"password\":\"wrong\",\"portal\":\"STORE\"}",
                         proxyHeaders("https://waynexo.example")), JsonNode.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-        assertThat(response.getBody().path("message").asText()).isEqualTo("Incorrect password");
+        assertThat(response.getBody().path("message").asText()).isEqualTo("Incorrect username or password");
     }
 }

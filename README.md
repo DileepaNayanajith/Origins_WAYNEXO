@@ -1,3 +1,5 @@
+> Production auth update: use one Username/Password login. Demo seeding is off by default; set JWT_SECRET and link persistent MySQL before deployment. Legacy demo/design details below do not override [the current rollout guide](docs/AUTH-DEPLOYMENT.md).
+
 # WAYNEXO — Role-based Delivery Operations Platform
 
 Working site built from the **WAYNEXO Figma** (Dispatcher TV, Store Manager MacBook, Driver iPhone, Loader iPad).
@@ -31,7 +33,7 @@ mvn spring-boot:run -Dspring-boot.run.profiles=h2
 ```
 The database tables are created automatically and the **raw data from the Figma screens is seeded on first start**
 (120 outlets, 60 vehicles, 2 depots, 120 daily orders, trips, deferrals, alerts…).
-To reset the demo data: `WAYNEXO_RESEED=true mvn spring-boot:run`.
+Automatic destructive reseeding is disabled. See [auth rollout and safe cleanup](docs/AUTH-DEPLOYMENT.md).
 
 DB environment variables: `DB_HOST`, `DB_PORT`, `DB_NAME` (default `waynexo`), `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`.
 

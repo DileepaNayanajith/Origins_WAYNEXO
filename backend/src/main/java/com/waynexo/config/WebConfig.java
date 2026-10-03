@@ -15,7 +15,7 @@ public class WebConfig implements WebMvcConfigurer {
 
     public WebConfig(AuthInterceptor authInterceptor, @Value("${waynexo.cors-origins:http://localhost:5173}") String origins) {
         this.authInterceptor = authInterceptor;
-        this.origins = origins.split(",");
+        this.origins = java.util.Arrays.stream(origins.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toArray(String[]::new);
     }
 
     @Override

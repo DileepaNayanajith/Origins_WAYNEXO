@@ -21,10 +21,11 @@ public class AuthInterceptor implements HandlerInterceptor {
 
     private final JwtService jwt;
     private final AppUserRepository users;
+    private final com.waynexo.service.UserConfiguration configuration;
 
-    public AuthInterceptor(JwtService jwt, AppUserRepository users) {
+    public AuthInterceptor(JwtService jwt, AppUserRepository users, com.waynexo.service.UserConfiguration configuration) {
         this.jwt = jwt;
-        this.users = users;
+        this.users = users; this.configuration = configuration;
     }
 
     @Override
@@ -45,6 +46,8 @@ public class AuthInterceptor implements HandlerInterceptor {
                 throw ApiException.forbidden("This area is not available for the " + user.getRole().name().replace('_', ' ').toLowerCase() + " role");
             }
         }
+        if (rule != null && !configuration.describe(user).fields().isEmpty())
+            throw ApiException.conflict("Complete account setup before continuing", null);
         request.setAttribute(AuthContext.ATTR, user.getId());
         return true;
     }

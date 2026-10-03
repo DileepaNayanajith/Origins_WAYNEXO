@@ -6,61 +6,37 @@ import com.waynexo.repo.*;
 import com.waynexo.security.AuthContext;
 import com.waynexo.security.JwtService;
 import com.waynexo.security.PasswordHasher;
-import com.waynexo.service.Labels;
 import com.waynexo.service.Mapper;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api")
 public class AuthController {
 
     private final AppUserRepository users;
-    private final VehicleRepository vehicles;
-    private final OutletRepository outlets;
-    private final DepotRepository depots;
     private final PasswordHasher hasher;
     private final JwtService jwt;
     private final AuthContext auth;
+    private final com.waynexo.service.UserConfiguration configuration;
 
-    public AuthController(AppUserRepository users, VehicleRepository vehicles, OutletRepository outlets, DepotRepository depots,
-                          PasswordHasher hasher, JwtService jwt, AuthContext auth) {
-        this.users = users; this.vehicles = vehicles; this.outlets = outlets; this.depots = depots;
-        this.hasher = hasher; this.jwt = jwt; this.auth = auth;
+    public AuthController(AppUserRepository users,
+                          PasswordHasher hasher, JwtService jwt, AuthContext auth, com.waynexo.service.UserConfiguration configuration) {
+        this.users = users;
+        this.hasher = hasher; this.jwt = jwt; this.auth = auth; this.configuration = configuration;
     }
 
     @PostMapping("/auth/login")
     @Transactional
     public LoginResponse login(@RequestBody LoginRequest req) {
-        String id = req.identifier() == null ? "" : req.identifier().trim();
-        if (id.isEmpty()) throw ApiException.badRequest("Enter your email or employee ID");
-
-        AppUser user = users.findByEmailIgnoreCase(id)
-                .or(() -> users.findByEmployeeIdIgnoreCase(id))
-                .or(() -> users.findByUsernameIgnoreCase(id))
-                .orElseThrow(() -> ApiException.unauthorized("We couldn't find that account"));
-
-        boolean dockBadge = "LOADER".equalsIgnoreCase(req.portal()) && user.getRole() == Role.LOADER;
-        if (dockBadge) {
-            // Dock terminals sign loaders in with their badge/employee ID at the selected depot.
-            if (req.depotCode() != null) depots.findByCode(req.depotCode()).ifPresent(user::setDepot);
-        } else {
-            if (user.getPasswordHash() == null) throw ApiException.unauthorized("Use the dock terminal badge sign-in for this account");
-            if (!hasher.matches(req.password(), user.getPasswordHash())) throw ApiException.unauthorized("Incorrect password");
-        }
-
-        if (user.getRole() == Role.DRIVER && req.vehicleCode() != null && !req.vehicleCode().isBlank()) {
-            Vehicle v = vehicles.findByCode(req.vehicleCode()).orElseThrow(() -> ApiException.badRequest("Unknown vehicle"));
-            user.setVehicleCode(v.getCode());
-        }
-        if (user.getRole() == Role.STORE_MANAGER && req.outletCode() != null && !req.outletCode().isBlank()) {
-            // Managers covering several outlets pick the one they are working at today.
-            outlets.findByCode(req.outletCode()).ifPresent(user::setOutlet);
-        }
+        String username = req.username() == null ? "" : req.username().trim();
+        if (username.isEmpty() || username.length() > 255 || req.password() == null || req.password().isEmpty() || req.password().length() > 1024)
+            throw ApiException.badRequest("Enter your username and password");
+        AppUser user = users.findByUsernameIgnoreCase(username)
+                .orElseThrow(() -> ApiException.unauthorized("Incorrect username or password"));
+        if (!hasher.matches(req.password(), user.getPasswordHash()))
+            throw ApiException.unauthorized("Incorrect username or password");
         return new LoginResponse(jwt.issue(user.getId(), user.getRole()), Mapper.user(user));
     }
 
@@ -70,20 +46,20 @@ public class AuthController {
         return Mapper.user(auth.user());
     }
 
-    /** Dropdown data for the login screens (no sign-in needed). */
-    @GetMapping("/public/login-options")
+    @GetMapping("/auth/setup")
     @Transactional(readOnly = true)
-    public LoginOptions loginOptions() {
-        List<Option> v = vehicles.findAllByOrderByIdAsc().stream()
-                .filter(x -> x.getState() != VehicleState.IN_WORKSHOP)
-                .sorted(Comparator.comparing(Vehicle::getCode))
-                .map(x -> new Option(x.getCode(), Labels.plate(x) + " (" + x.getModel() + ")", x.getDepot().getShortName()))
-                .toList();
-        List<Option> o = outlets.findAllByOrderByOutletNoAsc().stream()
-                .map(x -> new Option(x.getCode(), Labels.outletFull(x), x.getBrand().name()))
-                .toList();
-        List<Option> d = depots.findAll().stream().map(x -> new Option(x.getCode(), x.getName(), x.getShortName())).toList();
-        return new LoginOptions(v, o, d);
+    public SetupResponse setup() { return configuration.describe(auth.user()); }
+
+    @PutMapping("/auth/setup")
+    @Transactional
+    public UserDto saveSetup(@RequestBody SetupRequest req) {
+        AppUser user = auth.user();
+        configuration.save(user, req);
+        users.save(user);
+        return Mapper.user(user);
     }
 
+    /** Keep the existing Railway healthcheck URL without exposing operational master data. */
+    @GetMapping("/public/login-options")
+    public java.util.Map<String, String> health() { return java.util.Map.of("status", "ok"); }
 }

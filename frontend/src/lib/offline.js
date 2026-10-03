@@ -5,8 +5,11 @@ import { api } from './api'
 const QKEY = 'waynexo.driver.outbox'
 const CKEY = 'waynexo.driver.cache:'
 const SKEY = 'waynexo.driver.lastSync'
-const read = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d } catch { return d } }
-const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)) } catch { /* storage full/blocked */ } }
+let accountId = null
+export function setOfflineAccount(id) { accountId = id == null ? null : String(id) }
+const scoped = k => `waynexo.account:${accountId}:${k}`
+const read = (k, d) => { if (!accountId) return d; try { return JSON.parse(localStorage.getItem(scoped(k))) ?? d } catch { return d } }
+const write = (k, v) => { if (!accountId) return; try { localStorage.setItem(scoped(k), JSON.stringify(v)) } catch { /* storage full/blocked */ } }
 
 export const outbox = {
   all: () => read(QKEY, []),
@@ -18,6 +21,8 @@ const notify = () => window.dispatchEvent(new Event('waynexo:outbox'))
 
 /** Sends everything queued while offline. Returns true when the outbox is empty afterwards. */
 export async function flush() {
+  const owner = accountId
+  if (!owner) return false
   const items = outbox.all()
   write(SKEY, { at: Date.now() })
   if (!items.length) return true
@@ -26,6 +31,7 @@ export async function flush() {
       pods: items.filter((i) => i.type === 'pod').map((i) => ({ stopId: i.stopId, pod: { ...i.payload, clientId: i.clientId } })),
       exceptions: items.filter((i) => i.type === 'exception').map((i) => ({ ...i.payload, clientId: i.clientId })),
     })
+    if (accountId !== owner) return false
     outbox.clear()
     return true
   } catch { return false } finally { notify() }
@@ -60,7 +66,8 @@ export function useCachedApi(path) {
   const [offline, setOffline] = useState(false)
   const load = useCallback(async () => {
     if (!path) return
-    try { const d = await api.get(path); setData(d); write(CKEY + path, d); setOffline(false) }
+    const owner = accountId
+    try { const d = await api.get(path); if (owner !== accountId) return; setData(d); write(CKEY + path, d); setOffline(false) }
     catch (e) { if (e.status === 0) { setOffline(true); window.dispatchEvent(new Event('waynexo:unreachable')) } else throw e }
   }, [path])
   useEffect(() => { load().catch(() => {}) }, [load])

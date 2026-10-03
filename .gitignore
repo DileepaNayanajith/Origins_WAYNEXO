@@ -8,3 +8,6 @@ backend/data/
 WAYNEXO*.zip
 frontend/.env
 frontend/.env.production
+
+frontend/test-results/
+frontend/playwright-report/

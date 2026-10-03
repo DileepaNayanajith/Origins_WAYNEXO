@@ -1,5 +1,6 @@
 // Thin fetch wrapper around the Spring Boot REST API.
-const BASE = import.meta.env.VITE_API_URL || '/api'
+const configured = (import.meta.env.VITE_API_URL || '/api').trim().replace(/\/+$/, '')
+const BASE = configured === '/api' || configured.endsWith('/api') ? configured : configured + '/api'
 const TOKEN_KEY = 'waynexo.token'
 
 export const tokenStore = {
@@ -18,18 +19,18 @@ async function request(method, path, body) {
   if (body !== undefined) headers['Content-Type'] = 'application/json'
   let res
   try {
-    res = await fetch(BASE + path, { method, headers, body: body !== undefined ? JSON.stringify(body) : undefined })
+    res = await fetch(BASE + path, { method, headers, signal: AbortSignal.timeout(20000), body: body !== undefined ? JSON.stringify(body) : undefined })
   } catch (e) {
-    throw new ApiError(0, 'Network unavailable', null)
+    throw new ApiError(0, e.name === 'TimeoutError' ? 'The server took too long. Please try again.' : 'Cannot reach the WAYNEXO server. Please check your connection.', null)
   }
   const text = await res.text()
   let data = null
   try { data = text ? JSON.parse(text) : null } catch { data = text }
   if (!res.ok) {
-    if (res.status === 401) { tokenStore.set(null); window.dispatchEvent(new Event('waynexo:logout')) }
-    const message = (data && data.message) || (typeof data === 'string' && data.trim()) || res.statusText || `Request failed (${res.status})`
-    throw new ApiError(res.status, message, data)
+    if (res.status === 401 && path !== '/auth/login') { tokenStore.set(null); window.dispatchEvent(new Event('waynexo:logout')) }
+    throw new ApiError(res.status, (data && data.message) || `Request failed (${res.status}). Please try again.`, data)
   }
+  if (!res.headers.get('content-type')?.includes('application/json')) throw new ApiError(502, 'The API returned an unexpected response. Check the deployed API URL.', null)
   return data
 }
 

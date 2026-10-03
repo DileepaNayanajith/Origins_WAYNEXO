@@ -2,6 +2,8 @@ import { useEffect } from 'react'
 import { AuthProvider, useAuth, ROLE_HOME } from './lib/auth'
 import { useRoute, match, navigate } from './lib/router'
 import Login from './screens/Login'
+import AccountSetup from './components/AccountSetup'
+import { ownsPath } from './lib/roles'
 import Dashboard from './screens/dispatcher/Dashboard'
 import Orders from './screens/dispatcher/Orders'
 import Planning from './screens/dispatcher/Planning'
@@ -38,23 +40,25 @@ const ROUTES = [
 
 function Router() {
   const path = useRoute()
-  const { user, ready } = useAuth()
+  const { user, ready, setup, sessionError, restore, logout } = useAuth()
 
   const loginMatch = path === '/' || path === '/login' || path.startsWith('/login/')
   useEffect(() => {
     if (!ready) return
     if (!user && !loginMatch) navigate('/login', { replace: true })
-    if (user && (loginMatch || !path.startsWith(ROLE_HOME[user.role]))) navigate(ROLE_HOME[user.role], { replace: true })
+    if (user && (loginMatch || !ownsPath(user.role, path))) navigate(ROLE_HOME[user.role], { replace: true })
   }, [ready, user, path, loginMatch])
 
-  if (!ready) return null
+  if (!ready) return <main className="auth-page" role="status">Loading your session...</main>
+  if (sessionError) return <main className="auth-page"><section className="auth-card"><p role="alert">{sessionError}</p><button onClick={restore}>Try again</button><button onClick={logout}>Sign out</button></section></main>
   if (!user) return loginMatch ? <Login portal={path.split('/')[2]} /> : null
+  if (!setup || setup.fields.length > 0) return <main className="auth-page"><AccountSetup /></main>
   for (const [role, pattern, Comp] of ROUTES) {
     if (role !== user.role) continue
     const params = match(pattern, path)
     if (params) return <Comp {...params} key={path} />
   }
-  return null
+  return <main className="auth-page"><section className="auth-card"><p>Page not found.</p><button onClick={() => navigate(ROLE_HOME[user.role])}>Open my dashboard</button></section></main>
 }
 
 export default function App() {

@@ -26,6 +26,7 @@ public class JwtService {
     private final ObjectMapper mapper = new ObjectMapper();
 
     public JwtService(@Value("${waynexo.jwt-secret}") String secret, @Value("${waynexo.jwt-hours:12}") long hours) {
+        if (secret == null || secret.length() < 32 || secret.contains("waynexo-dev-secret")) throw new IllegalStateException("JWT_SECRET must be a unique secret of at least 32 characters");
         this.secret = secret.getBytes(StandardCharsets.UTF_8);
         this.ttlSeconds = hours * 3600;
     }
@@ -57,7 +58,7 @@ public class JwtService {
             @SuppressWarnings("unchecked")
             Map<String, Object> payload = mapper.readValue(B64D.decode(parts[1]), Map.class);
             long exp = ((Number) payload.get("exp")).longValue();
-            if (exp < Instant.now().getEpochSecond()) return null;
+            if (exp <= Instant.now().getEpochSecond()) return null;
             return new Claims(Long.parseLong((String) payload.get("sub")), Role.valueOf((String) payload.get("role")), exp);
         } catch (Exception e) {
             return null;

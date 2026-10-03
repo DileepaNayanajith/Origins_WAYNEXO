@@ -24,6 +24,7 @@ import java.util.*;
  * so the demo always looks current. Set WAYNEXO_RESEED=true to wipe and re-seed.
  */
 @Component
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = "waynexo.demo-seed", havingValue = "true")
 public class DataSeeder implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DataSeeder.class);
@@ -61,20 +62,12 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        if (reseed) wipe();
+        if (reseed) throw new IllegalStateException("Automatic destructive reseeding is disabled. Use the documented cleanup procedure.");
         if (users.count() > 0) {
             log.info("WAYNEXO data already present ({} users) - skipping seed", users.count());
             return;
         }
         seed();
-    }
-
-    private void wipe() {
-        exceptions.deleteAllInBatch(); items.deleteAllInBatch(); stops.deleteAllInBatch(); deferrals.deleteAllInBatch();
-        lines.deleteAllInBatch(); orders.deleteAllInBatch(); trips.deleteAllInBatch(); users.deleteAllInBatch();
-        vehicles.deleteAllInBatch(); products.deleteAllInBatch(); outlets.deleteAllInBatch(); depots.deleteAllInBatch();
-        events.deleteAllInBatch(); conflicts.deleteAllInBatch();
-        log.info("WAYNEXO data wiped for re-seed");
     }
 
     private List<Map<String, Object>> load(String name) throws Exception {
@@ -122,7 +115,7 @@ public class DataSeeder implements CommandLineRunner {
             AppUser u = new AppUser();
             u.setUsername(s(m, "username")); u.setEmployeeId(s(m, "employeeId")); u.setEmail(s(m, "email"));
             String pw = s(m, "password");
-            u.setPasswordHash(pw == null ? null : hasher.hash(pw));
+            u.setPasswordHash(hasher.hash(pw == null ? "demo-loader123" : pw));
             u.setFullName(s(m, "fullName")); u.setRole(Role.valueOf(s(m, "role"))); u.setTitle(s(m, "title")); u.setAvatar(s(m, "avatar"));
             u.setDepot(depotBy.get(s(m, "depot")));
             if (m.get("outlet") != null) u.setOutlet(outletBy.get(s(m, "outlet")));

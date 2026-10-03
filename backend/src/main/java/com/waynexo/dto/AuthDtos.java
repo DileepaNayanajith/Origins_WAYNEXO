@@ -5,11 +5,10 @@ import java.util.List;
 public final class AuthDtos {
     private AuthDtos() {}
 
-    /**
-     * identifier = email, employee ID or username. portal tells which login screen was used
-     * (DISPATCHER / STORE / DRIVER / LOADER); the user's own role always decides the interface.
-     */
-    public record LoginRequest(String identifier, String password, String portal, String vehicleCode, String depotCode, String outletCode) {}
+    public record LoginRequest(String username, String password) {}
+    public record SetupRequest(String vehicleCode, String depotCode, String outletCode) {}
+    public record SetupField(String name, String label, List<Option> options) {}
+    public record SetupResponse(List<SetupField> fields) {}
 
     public record DepotDto(String code, String name, String shortName) {}
 
