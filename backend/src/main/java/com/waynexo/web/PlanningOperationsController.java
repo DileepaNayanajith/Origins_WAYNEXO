@@ -19,8 +19,8 @@ public class PlanningOperationsController {
   public record DeferRequest(String reason, String note) {}
 
   @PostMapping("/planning/release")
-  public Map<String, Object> release() {
-    return Map.of("tripIds", service.release());
+  public Map<String, Object> release(@RequestParam(required = false) Long vehicleId) {
+    return Map.of("tripIds", service.release(vehicleId));
   }
 
   @PostMapping("/planning/auto-allocate")

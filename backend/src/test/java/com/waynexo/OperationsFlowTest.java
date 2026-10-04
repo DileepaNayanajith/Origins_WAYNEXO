@@ -140,6 +140,26 @@ class OperationsFlowTest {
   }
 
   @Test
+  void releaseSelectedVehicleIgnoresUnrelatedLegacyAssignments() {
+    StockOrder selected = place(milk, 2);
+    selected.setStatus(OrderStatus.CONFIRMED);
+    dispatcher.assign(selected.getId(), vehicle.getId(), 1);
+    Vehicle legacy = new Vehicle();
+    legacy.setCode("LEGACY"); legacy.setType(VehicleType.REEFER); legacy.setDepot(depot);
+    legacy.setState(VehicleState.AVAILABLE); vehicles.save(legacy);
+    StockOrder unrelated = place(milk, 1);
+    unrelated.setVehicle(legacy); unrelated.setStatus(OrderStatus.ASSIGNED);
+    assertTrue(loader.queue(ld).rows().isEmpty());
+    List<Long> ids = release.release(vehicle.getId());
+    assertEquals(1, ids.size());
+    assertEquals(ids.get(0), loader.queue(ld).rows().get(0).tripId());
+    assertEquals(OrderStatus.ASSIGNED, unrelated.getStatus());
+    assertNull(unrelated.getTrip());
+    assertThrows(ApiException.class, () -> release.release(legacy.getId()));
+    assertEquals(1, trips.count());
+  }
+
+  @Test
   void fuelEconomyCanBeConfiguredAndValidated() {
     vehicle.setKmPerL(0);
     dispatcher.configureFuelEconomy(vehicle.getId(), 7.5);

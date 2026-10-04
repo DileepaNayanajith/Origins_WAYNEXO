@@ -51,9 +51,14 @@ public class PlanReleaseService {
   }
 
   public List<Long> release() {
+    return release(null);
+  }
+
+  public List<Long> release(Long vehicleId) {
     List<StockOrder> assigned =
         orders.findByStatusOrderByIdAsc(OrderStatus.ASSIGNED).stream()
             .filter(o -> o.getTrip() == null)
+            .filter(o -> vehicleId == null || o.getVehicle().getId().equals(vehicleId))
             .toList();
     if (assigned.isEmpty())
       throw ApiException.badRequest(

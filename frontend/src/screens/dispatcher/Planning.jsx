@@ -22,7 +22,7 @@ function Bar({ label, value, max, suffix = '', maxSuffix = suffix, fmt = (v) => 
   )
 }
 
-function VehicleCard({ v, onDrop, armed }) {
+function VehicleCard({ v, onDrop, armed, onRelease }) {
   const [over, setOver] = useState(false)
   return (
     <div onDragOver={(e) => { e.preventDefault(); setOver(true) }} onDragLeave={() => setOver(false)}
@@ -48,6 +48,10 @@ function VehicleCard({ v, onDrop, armed }) {
           <p className="font-bold text-[#1e2229]">{v.tripsToday} / {v.maxTrips}</p>
         </div>
       </div>
+      {v.assigned.length > 0 && <div className="w-full flex flex-col gap-2">
+        <p className="text-[11px] text-[#9a3412]">Assigned — not yet sent to loading dock</p>
+        <button className="rounded-lg bg-[#e8453c] text-white px-3 min-h-[44px] text-sm" onClick={e => { e.stopPropagation(); onRelease(v.id) }}>Release this vehicle to dock</button>
+      </div>}
       <div className="flex flex-wrap gap-[7.111px] items-center pt-[7.111px] w-full">
         <div className="bg-[#f5f7fa] flex items-start px-[8.889px] py-[5.333px] rounded-[5.333px]">
           <p className="font-semibold leading-[normal] text-[#1e2229] text-[10.667px] whitespace-nowrap">{v.depot}</p>
@@ -94,7 +98,14 @@ export default function Planning() {
     if (!orderId) return
     try {
       if (orderId < 0) { await api.post('/dispatcher/planning/unassign', { orderId: -orderId }); flash('Order returned to pending assignments') }
-      else { await api.post('/dispatcher/planning/assign', { orderId, vehicleId, tripNumber }); flash('Order allocated — all constraints satisfied') }
+      else { await api.post('/dispatcher/planning/assign', { orderId, vehicleId, tripNumber }); flash('Order assigned. Release this vehicle to dock to create its loading manifest.') }
+    } catch (e) { flash(e.message, 'error') }
+    reload()
+  }
+  const releaseVehicle = async (vehicleId) => {
+    try {
+      const result = await api.post(`/dispatcher/planning/release?vehicleId=${vehicleId}`)
+      flash(`Released ${result.tripIds.length} trips. Open the loader account for this vehicle's depot.`)
     } catch (e) { flash(e.message, 'error') }
     reload()
   }
@@ -166,9 +177,9 @@ export default function Planning() {
           Active Route &amp; Vehicle Builder {armed && <span className="font-medium text-[#e8453c] text-[11.556px] ml-[8px]">Select a vehicle for the highlighted order…</span>}
         </p>
         <div className="flex flex-[1_0_0] flex-col gap-[14.222px] items-start min-h-px w-full overflow-y-auto no-scrollbar">
-          {vehicles.slice(0, 1).map((v) => <VehicleCard key={v.id} v={v} onDrop={drop(v.id)} armed={armed} />)}
+          {vehicles.slice(0, 1).map((v) => <VehicleCard key={v.id} v={v} onDrop={drop(v.id)} armed={armed} onRelease={releaseVehicle} />)}
           {conflicts.map((c) => <ConflictCard key={c.id} c={c} onDismiss={() => dismiss(c.id)} />)}
-          {vehicles.slice(1).map((v) => <VehicleCard key={v.id} v={v} onDrop={drop(v.id)} armed={armed} />)}
+          {vehicles.slice(1).map((v) => <VehicleCard key={v.id} v={v} onDrop={drop(v.id)} armed={armed} onRelease={releaseVehicle} />)}
         </div>
       </div>
       <Toast toast={toast} />
