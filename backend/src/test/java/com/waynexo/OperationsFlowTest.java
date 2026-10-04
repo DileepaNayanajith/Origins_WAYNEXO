@@ -140,6 +140,19 @@ class OperationsFlowTest {
   }
 
   @Test
+  void fuelEconomyCanBeConfiguredAndValidated() {
+    vehicle.setKmPerL(0);
+    dispatcher.configureFuelEconomy(vehicle.getId(), 7.5);
+    vehicles.flush();
+    assertEquals(7.5, vehicles.findById(vehicle.getId()).orElseThrow().getKmPerL());
+    assertEquals(7.5, dispatcher.fleet("ALL", "ALL", "ALL").vehicles().stream()
+        .filter(v -> v.id().equals(vehicle.getId())).findFirst().orElseThrow().kmPerL());
+    for (Double invalid : Arrays.asList(null, 0.0, -1.0, 101.0, Double.NaN))
+      assertThrows(ApiException.class, () -> dispatcher.configureFuelEconomy(vehicle.getId(), invalid));
+    assertThrows(ApiException.class, () -> dispatcher.configureFuelEconomy(Long.MAX_VALUE, 6.0));
+  }
+
+  @Test
   void completeReleasedTripShortfallPrecoolOfflinePodAndReceipt() {
     var o = place(milk, 10);
     dispatcher.confirm(List.of(o.getId()));

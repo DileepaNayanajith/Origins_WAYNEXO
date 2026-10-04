@@ -59,6 +59,14 @@ public class DispatcherController {
         return service.fleet(type, depot, state);
     }
 
+    public record FuelEconomyRequest(Double kmPerL) {}
+
+    @PutMapping("/fleet/{id}/fuel-economy")
+    public Map<String, Boolean> fuelEconomy(@PathVariable Long id, @RequestBody FuelEconomyRequest req) {
+        service.configureFuelEconomy(id, req.kmPerL());
+        return Map.of("ok", true);
+    }
+
     @GetMapping("/tracking")
     public Tracking tracking() { return service.tracking(); }
 

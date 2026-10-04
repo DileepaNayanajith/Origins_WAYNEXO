@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface TripRepository extends JpaRepository<Trip, Long> {
+    boolean existsByVehicleAndStatusNot(Vehicle vehicle, TripStatus status);
     List<Trip> findByTripDateAndDriverOrderByNumberAsc(LocalDate date, AppUser driver);
     List<Trip> findByTripDateOrderByIdAsc(LocalDate date);
     List<Trip> findByStatusOrderByIdAsc(TripStatus status);

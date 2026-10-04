@@ -206,11 +206,20 @@ public class DispatcherService {
                 .filter(v -> isAll(depot) || v.getDepot().getCode().equalsIgnoreCase(depot))
                 .filter(v -> isAll(state) || v.getState().name().equalsIgnoreCase(state))
                 .map(v -> new FleetVehicle(v.getId(), v.getCode(), v.getType().name(), Labels.vehicleDescription(v), v.getDepot().getShortName(),
-                        v.getState().name(), v.getFuelUsedL(), v.getFuelQuotaL(), v.getDriverName(), v.getTripsToday()))
+                        v.getState().name(), v.getFuelUsedL(), v.getFuelQuotaL(), v.getDriverName(), v.getTripsToday(), v.getKmPerL()))
                 .toList();
         FleetSummary s = new FleetSummary(all.size(), vehicles.countByType(VehicleType.REEFER), vehicles.countByType(VehicleType.DRY_BOX),
                 vehicles.countByType(VehicleType.VAN), all.stream().filter(v->v.getType()==VehicleType.VAN && v.isReefer()).count());
         return new Fleet(list, s, counts());
+    }
+
+    public void configureFuelEconomy(Long vehicleId, Double kmPerL) {
+        if (kmPerL == null || !Double.isFinite(kmPerL) || kmPerL <= 0 || kmPerL > 100)
+            throw ApiException.badRequest("Fuel economy must be greater than 0 and at most 100 km/L");
+        Vehicle vehicle = vehicles.findLockedById(vehicleId).orElseThrow(() -> ApiException.notFound("Vehicle not found"));
+        if (trips.existsByVehicleAndStatusNot(vehicle, TripStatus.COMPLETED))
+            throw ApiException.conflict("Complete released trips before changing fuel economy", null);
+        vehicle.setKmPerL(kmPerL);
     }
 
     // ---------------------------------------------------------------- RECOVER: tracking

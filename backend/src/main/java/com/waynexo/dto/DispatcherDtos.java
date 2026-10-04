@@ -31,7 +31,7 @@ public final class DispatcherDtos {
     public record AssignRequest(Long orderId, Long vehicleId, Integer tripNumber) {}
 
     public record FleetVehicle(Long id, String code, String type, String typeLabel, String depot, String state, double fuelUsed,
-                               double fuelQuota, String driverName, int tripsToday) {}
+                               double fuelQuota, String driverName, int tripsToday, double kmPerL) {}
     public record FleetSummary(long total, long reefers, long dryBox, long vans, long chilledVans) {}
     public record Fleet(List<FleetVehicle> vehicles, FleetSummary summary, Counts counts) {}
 
