@@ -7,9 +7,10 @@ import { useConnectivity } from '../../lib/offline'
 // Figma: "Driver Iphone 13 pro - 2..7" (390 x 844). Bottom tabs + offline banner.
 const TABS = [['home', 'Home', 'house', '/driver'], ['routes', 'My Routes', 'mapPin', '/driver/trip/current'], ['report', 'Report', 'alertCircle', '/driver/report'], ['offline', 'Offline', 'wifiOff', '/driver/offline']]
 
-export default function DriverShell({ active, children, footer, header, banner = true }) {
+export default function DriverShell({ active, children, footer, header, banner = true, responsive = false }) {
   const { online, queued } = useConnectivity()
   const showBanner = banner && !online
+  if (responsive) return <div className="driver-responsive"><main className="driver-responsive-content">{showBanner && <div role="status" className="driver-offline">You are offline · {queued} outcomes waiting to sync</div>}{header}{children}</main><div className="driver-bottom">{footer && <div className="driver-action">{footer}</div>}<nav aria-label="Driver navigation">{TABS.map(([k,label,icon,to]) => <Link key={k} to={to} aria-current={active === k ? 'page' : undefined}><Icon name={icon} size={24} color={active === k ? '#e8453c' : '#56616d'}/><span>{label}</span></Link>)}</nav></div></div>
   return (
     <Stage width={390} height={844} bg="#f5f7fa">
       <div className="absolute inset-0 bg-[#f5f7fa]">

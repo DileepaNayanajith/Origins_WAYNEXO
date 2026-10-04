@@ -13,7 +13,7 @@ export default function Home() {
   const [toast, setToast] = useState(null)
   const [menu, setMenu] = useState(false)
   const flash = (msg, type) => { setToast({ msg, type }); setTimeout(() => setToast(null), 3500) }
-  const active = d?.trips.find((t) => t.id === d.activeTripId)
+  const active = d?.trips?.find((t) => t.id === d.activeTripId)
 
   const start = async () => {
     if (!active) return
@@ -23,18 +23,18 @@ export default function Home() {
   }
 
   return (
-    <Shell active="home" footer={active && (
+    <Shell responsive active="home" footer={active && (
       <button onClick={start} className="ml-[16px] h-[52px] px-[22px] rounded-[12px] bg-[#e8453c] flex items-center gap-[10px] cursor-pointer shadow-[0_6px_16px_-6px_rgba(232,69,60,0.6)]">
         <span className="w-[2px] h-[20px] bg-white/80 rounded" />
         <span className="font-bold text-white text-[16px] whitespace-nowrap">{active.status === 'ACTIVE' ? 'Continue' : 'Start'} Trip {active.number} ({active.name})</span>
       </button>
     )}>
-      <p className="absolute left-[20px] top-[72px] text-[#56616d] text-[14px] leading-[17px]">Ayubowan,</p>
-      <p className="absolute left-[20px] top-[93px] font-bold text-[#1e2229] text-[22px] leading-[27px]">{d?.driverName}</p>
-      <button onClick={() => setMenu(!menu)} className="absolute left-[326px] top-[74px] size-[44px] rounded-full bg-[#fdf0ef] flex items-center justify-center font-bold text-[#e8453c] text-[16px] cursor-pointer">{d?.initials}</button>
+      <p className="driver-hello absolute left-[20px] top-[72px] text-[#56616d] text-[14px] leading-[17px]">Ayubowan,</p>
+      <p className="driver-name absolute left-[20px] top-[93px] font-bold text-[#1e2229] text-[22px] leading-[27px]">{d?.driverName}</p>
+      <button onClick={() => setMenu(!menu)} aria-label="Account menu" className="driver-avatar absolute left-[326px] top-[74px] size-[44px] rounded-full bg-[#fdf0ef] flex items-center justify-center font-bold text-[#e8453c] text-[16px] cursor-pointer">{d?.initials}</button>
       {menu && <button onClick={logout} className="absolute right-[20px] top-[124px] z-20 bg-white rounded-[10px] shadow-lg px-[14px] py-[10px] flex items-center gap-[8px] text-[#e8453c] font-semibold text-[14px]"><Icon name="logOut" size={16} color="#e8453c" />Sign out</button>}
 
-      <div className="absolute left-[16px] top-[148px] w-[358px] h-[110px] bg-white rounded-[16px] border-[#eef1f4] border-[0.889px] border-solid">
+      <div className="driver-vehicle absolute left-[16px] top-[148px] w-[358px] h-[110px] bg-white rounded-[16px] border-[#eef1f4] border-[0.889px] border-solid">
         <div className="absolute left-[16px] top-[16px] flex items-center gap-[8px]">
           <Icon name="truck" size={20} color="#e8453c" />
           <span className="font-bold text-[#1e2229] text-[15px]">{d?.vehicle?.plate}</span>
@@ -43,13 +43,14 @@ export default function Home() {
         <span className="absolute left-[16px] top-[49px] w-[326px] h-[0.889px] bg-[#e4e8ee]" />
         <p className="absolute left-[16px] top-[61px] text-[#8d9aab] text-[11px] uppercase">Depot</p>
         <p className="absolute left-[16px] top-[78px] font-semibold text-[#1e2229] text-[13.5px]">{d?.vehicle?.depot}</p>
-        <p className="absolute right-[16px] top-[61px] text-[#8d9aab] text-[11px] uppercase text-right">Max Payload</p>
+        <p className="absolute right-[16px] top-[61px] text-[#8d9aab] text-[11px] uppercase text-right">Allocated load</p>
         <p className="absolute right-[16px] top-[78px] font-semibold text-[#1e2229] text-[13.5px] text-right">{d?.vehicle?.maxPayload}</p>
       </div>
 
-      <div className="absolute left-[16px] top-[274px] w-[358px] bg-white rounded-[16px] border-[#eef1f4] border-[0.889px] border-solid px-[16px] pt-[16px] pb-[16px]">
+      <div className="driver-runs absolute left-[16px] top-[274px] w-[358px] bg-white rounded-[16px] border-[#eef1f4] border-[0.889px] border-solid px-[16px] pt-[16px] pb-[16px]">
         <p className="font-bold text-[#1e2229] text-[15px] leading-[18px]">Today's Runs ({d?.weekday})</p>
         <div className="flex flex-col gap-[14px] mt-[14px]">
+          {d && !d.trips?.length && <div className="driver-empty"><Icon name="mapPin" size={32} color="#e8453c"/><b>No trips assigned yet</b><p>Your dispatcher will assign your delivery runs. They will appear here when ready.</p></div>}
           {(d?.trips || []).map((t) => {
             const on = t.label === 'ACTIVE'
             return (
@@ -66,12 +67,7 @@ export default function Home() {
         </div>
       </div>
 
-      {d?.advisory && (
-        <div className="absolute left-[16px] top-[499px] w-[358px] min-h-[75px] rounded-[12px] bg-[#fffbeb] border-[#f5c26b] border-[0.889px] border-solid flex items-center gap-[10px] px-[12px] py-[12px]">
-          <Icon name="alertTriangle" size={20} color="#d97706" />
-          <p className="text-[#78350f] text-[12.4px] leading-[17px]"><b>{d.advisory.title}</b> {d.advisory.message}</p>
-        </div>
-      )}
+      <aside className="driver-note"><Icon name="alertCircle" size={20} color="#56616d"/><p>Check My Routes for delivery stops. Use Report for issues and Offline to review pending sync.</p></aside>
       <DToast toast={toast} />
     </Shell>
   )
