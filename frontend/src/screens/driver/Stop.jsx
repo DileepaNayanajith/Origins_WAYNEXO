@@ -15,7 +15,7 @@ export default function Stop({ id }) {
 
   const arrive = async () => {
     if (s.status === 'COMPLETED') return
-    try { if (!s.arrived) setS(await api.post(`/driver/stops/${id}/arrive`)) } catch { /* offline: continue anyway */ }
+    try { if (!s.arrived) setS(await api.post(`/driver/stops/${id}/arrive`)) } catch (error) { if (error.status !== 0) { setToast({ msg: error.message, type: 'error' }); return } }
     navigate('/driver/pod/' + id)
   }
   const maps = () => window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(s.address)}`, '_blank')
@@ -33,7 +33,7 @@ export default function Stop({ id }) {
         </div>
       )}>
       {s && (
-        <div className="absolute left-[16px] top-[116px] w-[358px] bottom-[190px] overflow-y-auto no-scrollbar flex flex-col gap-[16px]">
+        <div className="driver-stack">
           <div className="bg-white rounded-[12px] px-[16px] pt-[16px] pb-[16px] shrink-0">
             <div className="flex justify-between items-start">
               <p className="font-bold text-[#1e2229] text-[18px] leading-[22px]">{s.outletName}</p>

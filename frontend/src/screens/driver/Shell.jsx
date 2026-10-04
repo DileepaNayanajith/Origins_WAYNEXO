@@ -7,7 +7,7 @@ import { useConnectivity } from '../../lib/offline'
 // Figma: "Driver Iphone 13 pro - 2..7" (390 x 844). Bottom tabs + offline banner.
 const TABS = [['home', 'Home', 'house', '/driver'], ['routes', 'My Routes', 'mapPin', '/driver/trip/current'], ['report', 'Report', 'alertCircle', '/driver/report'], ['offline', 'Offline', 'wifiOff', '/driver/offline']]
 
-export default function DriverShell({ active, children, footer, header, banner = true, responsive = false }) {
+export default function DriverShell({ active, children, footer, header, banner = true, responsive = true }) {
   const { online, queued } = useConnectivity()
   const showBanner = banner && !online
   if (responsive) return <div className="driver-responsive"><main className="driver-responsive-content">{showBanner && <div role="status" className="driver-offline">You are offline · {queued} outcomes waiting to sync</div>}{header}{children}</main><div className="driver-bottom">{footer && <div className="driver-action">{footer}</div>}<nav aria-label="Driver navigation">{TABS.map(([k,label,icon,to]) => <Link key={k} to={to} aria-current={active === k ? 'page' : undefined}><Icon name={icon} size={24} color={active === k ? '#e8453c' : '#56616d'}/><span>{label}</span></Link>)}</nav></div></div>
@@ -46,23 +46,15 @@ export default function DriverShell({ active, children, footer, header, banner =
   )
 }
 
-export function MobileHeader({ title, subtitle, back = -1, height = 63 }) {
-  return (
-    <div className="relative w-[390px] bg-[#f5f7fa] border-b-[0.889px] border-[#e4e8ee] border-solid" style={{ marginTop: 44, height }}>
-      <button onClick={() => (back === -1 ? history.back() : navigate(back))} className="absolute left-[20px] top-1/2 -translate-y-1/2 size-[32px] rounded-full bg-[#e4e8ee] flex items-center justify-center cursor-pointer">
-        <Icon name="chevronLeft" size={16} color="#1e2229" stroke={2.5} />
-      </button>
-      <div className="absolute left-[64px] top-1/2 -translate-y-1/2">
-        <p className="font-bold text-[#1e2229] text-[18px] leading-[22px] whitespace-nowrap">{title}</p>
-        {subtitle && <p className="text-[#56616d] text-[12.5px] leading-[15px] mt-[2px] whitespace-nowrap">{subtitle}</p>}
-      </div>
-    </div>
-  )
+export function MobileHeader({ title, subtitle, back = -1 }) {
+  return <header className="driver-mobile-header">
+    <button aria-label="Back" onClick={() => back === -1 ? history.back() : navigate(back)}><Icon name="chevronLeft" size={20} color="#1e2229" /></button>
+    <div><h1>{title}</h1>{subtitle && <p>{subtitle}</p>}</div>
+  </header>
 }
 
 export function DToast({ toast }) {
   if (!toast) return null
   const err = toast.type === 'error'
-  return <div className="absolute left-[16px] right-[16px] top-[600px] z-50 px-[14px] py-[11px] rounded-[10px] shadow-lg text-[13px] font-semibold text-center"
-    style={{ background: err ? '#fee2e2' : '#1e2229', color: err ? '#b91c1c' : '#fff' }}>{toast.msg}</div>
+  return <div role={err ? 'alert' : 'status'} className="driver-toast" style={{ background: err ? '#fee2e2' : '#1e2229', color: err ? '#b91c1c' : '#fff' }}>{toast.msg}</div>
 }

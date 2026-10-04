@@ -8,7 +8,7 @@ import { navigate } from '../../lib/router'
 
 // Figma: "Driver Iphone 13 pro - 5" — Proof of Delivery (works offline: queued and synced later)
 export default function Pod({ id }) {
-  const [s] = useCachedApi('/driver/stops/' + id)
+  const [s, , , , loadError] = useCachedApi('/driver/stops/' + id)
   const [cond, setCond] = useState({})
   const [photos, setPhotos] = useState([])
   const [name, setName] = useState('')
@@ -17,7 +17,7 @@ export default function Pod({ id }) {
   const [toast, setToast] = useState(null)
   const [stamp, setStamp] = useState('')
   const file = useRef(null)
-  const flash = (msg, type) => { setToast({ msg, type }); setTimeout(() => setToast(null), 3000) }
+  const flash = (msg, type) => { setToast({ msg, type }); if (type !== 'error') setTimeout(() => setToast(null), 3000) }
   useEffect(() => { if (s) setCond(Object.fromEntries(s.items.map((i) => [i.id, { condition: 'GOOD', damagedQty: 0 }]))) }, [s])
 
   const cycle = (i) => {
@@ -27,6 +27,7 @@ export default function Pod({ id }) {
   }
 
   const submit = async () => {
+    if (!s || busy) return
     if (!name.trim()) return flash('Enter the recipient\'s full name', 'error')
     if (!sig) return flash('Ask the recipient to sign', 'error')
     const payload = { items: Object.entries(cond).map(([k, v]) => ({ id: Number(k), ...v })), recipientName: name, signature: sig, photoCount: photos.length }
@@ -52,8 +53,9 @@ export default function Pod({ id }) {
   return (
     <Shell active="routes" header={<MobileHeader title="Proof of Delivery" subtitle={s?.outletFull} />}
       footer={<button disabled={busy} onClick={submit} className="ml-[16px] h-[52px] px-[14px] rounded-[12px] bg-[#e8453c] font-bold text-white text-[16px] cursor-pointer disabled:opacity-70">{busy ? 'Saving…' : 'Submit and Complete Stop'}</button>}>
+      {loadError && !s && <div role="alert" className="driver-panel">{loadError.message}</div>}
       {s && (
-        <div className="absolute left-[16px] top-[123px] w-[358px] bottom-[190px] overflow-y-auto no-scrollbar flex flex-col gap-[16px]">
+        <div className="driver-stack">
           <div className="bg-white rounded-[12px] p-[16px] shrink-0">
             <p className="font-bold text-[#1e2229] text-[14px]">Confirm Item Conditions</p>
             {s.items.map((i) => {
@@ -82,7 +84,7 @@ export default function Pod({ id }) {
           <div className="bg-white rounded-[12px] p-[16px] shrink-0">
             <p className="font-bold text-[#1e2229] text-[14px]">Recipient Acknowledgment</p>
             <p className="text-[#56616d] text-[12.4px] mt-[10px]">Full Name</p>
-            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. K. Wijewardene (Store Asst.)"
+            <input aria-label="Recipient full name" maxLength={200} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. K. Wijewardene (Store Asst.)"
               className="mt-[6px] w-full h-[36px] rounded-[8px] bg-[#f5f7fa] px-[10px] text-[14px] text-[#1e2229] outline-none placeholder:text-[#8d9aab]" />
             <p className="text-[#56616d] text-[12.4px] mt-[14px]">Draw Signature</p>
             <SignaturePad width={326} height={100} onChange={(v) => { setSig(v); setStamp(v ? new Date().toLocaleTimeString('en-GB') : '') }}

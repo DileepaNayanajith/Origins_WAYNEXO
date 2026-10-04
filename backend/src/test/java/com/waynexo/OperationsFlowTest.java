@@ -202,7 +202,7 @@ class OperationsFlowTest {
         new DriverDtos.PodRequest(
             List.of(new DriverDtos.PodItem(item.getId(), "GOOD", 0)),
             "Receiver",
-            "signature",
+            "data:image/png;base64," + "A".repeat(40000),
             0,
             "qa-pod-1");
     var sync =

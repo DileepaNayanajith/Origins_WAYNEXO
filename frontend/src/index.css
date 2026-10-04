@@ -97,3 +97,40 @@ body {
 }
 
 @media (max-width:1023px) { .phone-role button, .phone-role a { min-width:44px; } }
+
+/* Driver forms and route screens follow the device viewport, without a scaled phone frame. */
+.driver-mobile-header { display:flex; align-items:center; gap:12px; margin:0 0 20px; padding-bottom:16px; border-bottom:1px solid #e4e8ee; }
+.driver-mobile-header > button { flex-shrink:0; width:44px; height:44px; display:grid; place-items:center; background:#e4e8ee; border-radius:50%; }
+.driver-mobile-header h1 { font-size:20px; font-weight:700; overflow-wrap:anywhere; }
+.driver-mobile-header p { font-size:14px; color:#56616d; margin-top:4px; }
+.driver-stack { display:flex; flex-direction:column; gap:16px; width:100%; min-width:0; }
+.driver-stack h2 { font-weight:700; font-size:16px; }
+.driver-route-card { display:flex; align-items:center; gap:12px; width:100%; padding:16px; border:1px solid #e4e8ee; background:white; border-radius:12px; text-align:left; flex-wrap:wrap; }
+.driver-route-card > div { flex:1; min-width:130px; overflow-wrap:anywhere; }
+.driver-route-card p { font-size:13px; color:#56616d; margin-top:5px; }
+.driver-stop-number { display:grid; place-items:center; width:32px; height:32px; flex-shrink:0; background:#f5f7fa; border-radius:50%; font-weight:700; }
+.driver-route-status { border-radius:6px; padding:6px 8px; font-size:11px; font-weight:700; background:#e4e8ee; }
+.driver-panel { background:white; padding:16px; border-radius:12px; overflow-wrap:anywhere; }
+.driver-panel strong { display:block; font-size:22px; margin-top:8px; }
+.driver-stat-grid,.driver-choice-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.driver-fieldset legend,.driver-field { font-weight:600; color:#56616d; margin-bottom:10px; }
+.driver-choice-grid button { display:flex; align-items:center; justify-content:center; flex-direction:column; gap:10px; min-height:86px; padding:12px; background:white; border:1px solid #e4e8ee; border-radius:12px; font-size:14px; }
+.driver-choice-grid button.selected,.driver-severity button.selected { background:#fdf0ef; border-color:#e8453c; color:#e8453c; }
+.driver-field { display:flex; flex-direction:column; gap:10px; }
+.driver-field textarea { width:100%; min-height:140px; padding:14px; background:white; border:1px solid #e4e8ee; border-radius:12px; color:#1e2229; font-size:16px; font-weight:400; }
+.driver-severity { display:flex; flex-wrap:wrap; gap:10px; }
+.driver-severity button { min-height:44px; flex:1; padding:10px; border:1px solid #e4e8ee; border-radius:8px; background:white; }
+.driver-call { display:flex; align-items:center; justify-content:center; gap:8px; min-height:48px; padding:12px; border-radius:10px; background:#fdf0ef; color:#e8453c; }
+.driver-offline-note { background:#effcf8; color:#0f766e; }
+.driver-offline-note p { margin-top:8px; font-size:14px; }
+.driver-action { max-width:600px; margin:auto; padding:12px 16px; }
+.driver-action button { width:100%; margin-left:0; min-height:48px; height:auto; padding:12px; white-space:normal; }
+.driver-action > div { padding:0; gap:8px; }
+.driver-action > div button { width:50%; }
+.driver-toast { position:fixed; z-index:60; left:16px; right:16px; bottom:calc(156px + env(safe-area-inset-bottom,0px)); max-width:568px; margin:auto; padding:14px; border-radius:12px; font-size:14px; text-align:center; box-shadow:0 5px 20px #0002; }
+.driver-stack input { font-size:16px; min-height:44px; }
+.driver-stack canvas { max-width:100%; }
+.driver-stack div:has(> canvas) { width:100% !important; }
+.driver-stack button { min-height:44px; }
+.driver-stack .driver-choice-grid button { min-height:86px; }
+@media (max-width:360px) { .driver-route-status { margin-left:44px; } .driver-stat-grid { grid-template-columns:1fr; } }

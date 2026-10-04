@@ -132,6 +132,8 @@ public class DriverService {
         if (req.recipientName() == null || req.recipientName().isBlank()) throw ApiException.badRequest("Enter the recipient's full name");
         if (req.signature() == null || req.signature().isBlank()) throw ApiException.badRequest("Recipient signature is required");
 
+        if (req.signature().length() > 1_000_000) throw ApiException.badRequest("Signature is too large. Clear it and sign again.");
+        if (req.recipientName().trim().length() > 200) throw ApiException.badRequest("Recipient name must be at most 200 characters");
         int damaged = 0;
         Map<Long, StopItem> byId = new HashMap<>();
         items.findByStopOrderByIdAsc(s).forEach(i -> byId.put(i.getId(), i));

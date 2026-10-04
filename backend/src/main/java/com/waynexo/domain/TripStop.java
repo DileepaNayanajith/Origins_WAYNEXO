@@ -67,7 +67,7 @@ public class TripStop {
     private String recipientName;
 
     @Lob
-    @Column(name = "signature")
+    @Column(name = "signature", columnDefinition = "LONGTEXT")
     private String signature;
 
     @Column(name = "photo_count")

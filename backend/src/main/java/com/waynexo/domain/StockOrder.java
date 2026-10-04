@@ -67,11 +67,11 @@ public class StockOrder {
     private String receiptNotes;
 
     @Lob
-    @Column(name = "receipt_signature")
+    @Column(name = "receipt_signature", columnDefinition = "LONGTEXT")
     private String receiptSignature;
 
     @Lob
-    @Column(name = "damage_photo")
+    @Column(name = "damage_photo", columnDefinition = "LONGTEXT")
     private String damagePhoto;
 
     @Column(name = "received_at")
