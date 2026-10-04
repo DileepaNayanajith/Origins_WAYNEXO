@@ -54,3 +54,12 @@ body {
 .driver-offline { padding:12px; background:#fee2e2; color:#b91c1c; border-radius:12px; margin-bottom:16px; }
 .driver-responsive :focus-visible { outline:3px solid #1d89e8; outline-offset:3px; }
 @media(max-width:360px) { .driver-responsive-content { padding-left:14px; padding-right:14px; } .driver-responsive .driver-vehicle p { font-size:12px; } }
+
+/* TV gets a full-frame overview; PCs and tablets retain readable controls. */
+.role-display :focus-visible { outline:3px solid #1d89e8; outline-offset:3px; }
+.role-display-tablet button, .role-display-tablet a { min-height:56px; }
+.role-display-tablet input, .role-display-tablet select { min-height:56px; font-size:20px; }
+.role-display-tablet button { touch-action:manipulation; }
+.role-display-pc button, .role-display-pc input, .role-display-pc select { min-height:36px; }
+.role-display-tv nav a { min-height:44px; }
+@media(prefers-reduced-motion:reduce) { .role-display * { scroll-behavior:auto; } }

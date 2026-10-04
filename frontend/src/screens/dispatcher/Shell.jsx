@@ -21,7 +21,7 @@ export default function DispatcherShell({ active, title, subtitle, counts, alert
   const { user, logout } = useAuth()
   const [menu, setMenu] = useState(false)
   return (
-    <Stage width={1280} height={720} bg="#f5f7fa">
+    <Stage display="tv" width={1280} height={720} bg="#f5f7fa">
       <div className="absolute bg-[#f5f7fa] flex h-[720px] items-start left-0 top-0 w-[1280px]">
         {/* sidebar */}
         <div className="bg-white border-[#e4e8ee] border-r-[0.889px] border-solid flex flex-col h-full items-start justify-between p-[14.222px] relative shrink-0 w-[213.333px]">

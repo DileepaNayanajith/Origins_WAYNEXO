@@ -12,7 +12,7 @@ export default function LoaderShell({ title, height = 834, children }) {
   const [menu, setMenu] = useState(false)
   useEffect(() => { const id = setInterval(() => setNow(new Date()), 30000); return () => clearInterval(id) }, [])
   return (
-    <Stage width={1194} height={height} bg="#f5f7fa">
+    <Stage display="tablet" width={1194} height={height} bg="#f5f7fa">
       <div className="absolute inset-0 bg-[#f5f7fa]">
         <header className="absolute left-0 top-0 w-[1194px] h-[84px] bg-white border-b-[0.889px] border-[#e4e8ee] border-solid">
           <img src="/img/logo.png" alt="WAYNEXO" className="absolute left-[28px] top-[19px] size-[46px] rounded-[9px]" />

@@ -14,7 +14,7 @@ export default function StoreShell({ active, children }) {
   const { user, logout } = useAuth()
   const [menu, setMenu] = useState(false)
   return (
-    <Stage width={1280} height={832} bg="#f5f7fa">
+    <Stage display="pc" width={1280} height={832} bg="#f5f7fa">
       <div className="absolute inset-0 bg-[#f5f7fa]">
         <header className="absolute left-0 top-0 w-[1280px] h-[63px] bg-white border-b-[0.889px] border-[#e4e8ee] border-solid">
           <img src="/img/logo.png" alt="WAYNEXO" className="absolute left-[28px] top-[14px] w-[36px] h-[35px] rounded-[7px]" />
