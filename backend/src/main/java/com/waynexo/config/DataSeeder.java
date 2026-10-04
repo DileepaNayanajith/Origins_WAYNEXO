@@ -24,7 +24,7 @@ import java.util.*;
  * so the demo always looks current. Set WAYNEXO_RESEED=true to wipe and re-seed.
  */
 @Component
-@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = "waynexo.demo-seed", havingValue = "true")
+@org.springframework.boot.autoconfigure.condition.ConditionalOnExpression("${waynexo.demo-seed:false} || ${waynexo.master-seed:false}")
 public class DataSeeder implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DataSeeder.class);
@@ -47,16 +47,20 @@ public class DataSeeder implements CommandLineRunner {
     private final PasswordHasher hasher;
     private final OpsClock clock;
     private final boolean reseed;
+    private final boolean demo;
+    private final String accountPasswords;
 
     public DataSeeder(DepotRepository depots, OutletRepository outlets, AppUserRepository users, VehicleRepository vehicles,
                       ProductRepository products, StockOrderRepository orders, OrderLineRepository lines, TripRepository trips,
                       TripStopRepository stops, StopItemRepository items, DeferralRepository deferrals, OpsEventRepository events,
                       ExceptionReportRepository exceptions, PlanningConflictRepository conflicts, PasswordHasher hasher, OpsClock clock,
-                      @Value("${waynexo.reseed:false}") boolean reseed) {
+                      @Value("${waynexo.reseed:false}") boolean reseed,
+                      @Value("${waynexo.demo-seed:false}") boolean demo,
+                      @Value("${waynexo.account-passwords:}") String accountPasswords) {
         this.depots = depots; this.outlets = outlets; this.users = users; this.vehicles = vehicles; this.products = products;
         this.orders = orders; this.lines = lines; this.trips = trips; this.stops = stops; this.items = items;
         this.deferrals = deferrals; this.events = events; this.exceptions = exceptions; this.conflicts = conflicts;
-        this.hasher = hasher; this.clock = clock; this.reseed = reseed;
+        this.hasher = hasher; this.clock = clock; this.reseed = reseed; this.demo = demo; this.accountPasswords = accountPasswords;
     }
 
     @Override
@@ -67,6 +71,8 @@ public class DataSeeder implements CommandLineRunner {
             log.info("WAYNEXO data already present ({} users) - skipping seed", users.count());
             return;
         }
+        if (depots.count() > 0 || outlets.count() > 0 || vehicles.count() > 0 || products.count() > 0 || orders.count() > 0 || trips.count() > 0)
+            throw new IllegalStateException("Bootstrap is allowed only on a completely empty database; existing data requires a reviewed import.");
         seed();
     }
 
@@ -83,6 +89,17 @@ public class DataSeeder implements CommandLineRunner {
 
     @SuppressWarnings("unchecked")
     private void seed() throws Exception {
+        Map<String, String> passwords = new HashMap<>();
+        if (!demo) {
+            if (accountPasswords.isBlank()) throw new IllegalStateException("Master bootstrap requires WAYNEXO_ACCOUNT_PASSWORDS for all role accounts");
+            passwords = json.readValue(accountPasswords, new TypeReference<Map<String, String>>() {});
+            Set<String> unique = new HashSet<>();
+            for (Map<String, Object> m : load("users")) {
+                String pw = passwords.get(s(m, "username"));
+                if (pw == null || pw.length() < 12 || !unique.add(pw))
+                    throw new IllegalStateException("Each bootstrap account requires a distinct password of at least 12 characters");
+            }
+        }
         LocalDate today = clock.today();
         Map<String, Depot> depotBy = new HashMap<>();
         for (Map<String, Object> m : load("depots")) {
@@ -107,6 +124,7 @@ public class DataSeeder implements CommandLineRunner {
             v.setDepot(depotBy.get(s(m, "depot"))); v.setState(VehicleState.valueOf(s(m, "state"))); v.setDriverName(s(m, "driverName"));
             v.setCapacityKg(d(m, "capacityKg")); v.setCapacityM3(d(m, "capacityM3")); v.setFuelQuotaL(d(m, "fuelQuotaL"));
             v.setFuelUsedL(d(m, "fuelUsedL")); v.setTripsToday(i(m, "tripsToday")); v.setMaxTrips(2);
+            if (!demo) { v.setFuelUsedL(0); v.setTripsToday(0); if (v.getState() != VehicleState.IN_WORKSHOP) v.setState(VehicleState.AVAILABLE); }
             vehicleBy.put(v.getCode(), vehicles.save(v));
         }
 
@@ -114,7 +132,7 @@ public class DataSeeder implements CommandLineRunner {
         for (Map<String, Object> m : load("users")) {
             AppUser u = new AppUser();
             u.setUsername(s(m, "username")); u.setEmployeeId(s(m, "employeeId")); u.setEmail(s(m, "email"));
-            String pw = s(m, "password");
+            String pw = demo ? s(m, "password") : passwords.get(s(m, "username"));
             u.setPasswordHash(hasher.hash(pw == null ? "demo-loader123" : pw));
             u.setFullName(s(m, "fullName")); u.setRole(Role.valueOf(s(m, "role"))); u.setTitle(s(m, "title")); u.setAvatar(s(m, "avatar"));
             u.setDepot(depotBy.get(s(m, "depot")));
@@ -132,6 +150,10 @@ public class DataSeeder implements CommandLineRunner {
             productBy.put(p.getSku(), products.save(p));
         }
 
+        if (!demo) {
+            log.info("Master bootstrap complete: users/master data only; no sample operational records created");
+            return;
+        }
         Map<String, StockOrder> orderBy = new HashMap<>();
         for (Map<String, Object> m : load("orders")) {
             StockOrder o = new StockOrder();

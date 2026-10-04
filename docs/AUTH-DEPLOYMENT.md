@@ -45,3 +45,9 @@ Import approved real master data and existing role accounts into a fresh databas
 Backend: `mvn -f backend/pom.xml test` (requires JDK 17+). Frontend: `cd frontend && npm ci && npm run lint && npm test && npm run build`. Browser tests: `npm run test:e2e` start a local Vite server with controlled API fixtures (Chrome required; set CHROME_PATH if needed). Real backend persistence/proxy behavior is tested separately with Spring integration tests. Do not run browser/demo fixtures against production.
 
 Production exposure also requires ingress rate limiting and normal security/monitoring controls; the current update does not add a distributed brute-force limiter.
+
+## Empty-database master bootstrap
+
+For the new persistent Railway database only, set WAYNEXO_MASTER_SEED=true and WAYNEXO_DEMO_SEED=false. Set WAYNEXO_ACCOUNT_PASSWORDS privately to JSON containing distinct passwords (12+ characters each) for harsha, nimal, suresh, kasun, ruwan. Example shape (placeholders only): `{"harsha":"<private password>","nimal":"<private password>","suresh":"<private password>","kasun":"<private password>","ruwan":"<private password>"}`. Password entry is a user handoff; never commit credentials or send them in chat.
+
+This explicit bootstrap reuses the project's existing master datasets and role accounts, hashes private passwords, zeroes demo vehicle runtime counters, preserves workshop status, and creates no orders/trips/stops/events/conflicts/deferrals. It runs in one transaction, rejects partial nonempty databases and skips an already provisioned database without resetting users/passwords. These master datasets still require review for real operations. After successful provisioning, set WAYNEXO_MASTER_SEED=false and remove WAYNEXO_ACCOUNT_PASSWORDS from the app environment. Do not enable demo seeding on the submission/production URL.

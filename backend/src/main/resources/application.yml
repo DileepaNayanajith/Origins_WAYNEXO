@@ -31,4 +31,6 @@ waynexo:
   # Re-create demo data on every start (handy before a demo)
   reseed: ${WAYNEXO_RESEED:false}
   demo-seed: ${WAYNEXO_DEMO_SEED:false}
+  master-seed: ${WAYNEXO_MASTER_SEED:false}
+  account-passwords: ${WAYNEXO_ACCOUNT_PASSWORDS:}
   cors-origins: ${CORS_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
