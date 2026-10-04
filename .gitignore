@@ -14,3 +14,7 @@ frontend/playwright-report/
 
 .env
 *.private.json
+
+# Private deployment credentials and backup exports
+PRIVATE-*
+*.private.env
