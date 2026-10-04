@@ -32,11 +32,12 @@ public class StoreService {
     private final DeferralRepository deferrals;
     private final OpsEventRepository events;
     private final OpsClock clock;
+    private final ChallengeRules rules;
 
     public StoreService(ProductRepository products, StockOrderRepository orders, OrderLineRepository lines, TripStopRepository stops,
-                        DeferralRepository deferrals, OpsEventRepository events, OpsClock clock) {
+                        DeferralRepository deferrals, OpsEventRepository events, OpsClock clock, ChallengeRules rules) {
         this.products = products; this.orders = orders; this.lines = lines; this.stops = stops; this.deferrals = deferrals;
-        this.events = events; this.clock = clock;
+        this.events = events; this.clock = clock; this.rules = rules;
     }
 
     private static Outlet outletOf(AppUser u) {
@@ -64,6 +65,7 @@ public class StoreService {
         List<DeliveryOption> out = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
             LocalDate d = first.plusDays(i);
+            if (!rules.operating(d)) continue;
             String rel = d.equals(clock.today().plusDays(1)) ? "Tomorrow, " : d.format(WEEKDAY) + ", ";
             out.add(new DeliveryOption(d.toString(), rel + Labels.monthDay(d) + " (Before 8 AM)"));
         }
@@ -71,15 +73,34 @@ public class StoreService {
     }
 
     public Placed place(AppUser user, PlaceOrder req) {
+        if (req.items() == null || req.items().stream().noneMatch(i -> i.qty() > 0)) throw ApiException.badRequest("Your cart is empty");
+        Map<Boolean,List<CartItem>> groups = new LinkedHashMap<>();
+        for (CartItem item : req.items()) {
+            if (item.qty() <= 0) continue;
+            Product product = products.findById(item.productId()).orElseThrow(() -> ApiException.badRequest("Unknown product " + item.productId()));
+            groups.computeIfAbsent(Labels.needsReefer(product.getTempClass()), k -> new ArrayList<>()).add(item);
+        }
+        List<Placed> placed = new ArrayList<>();
+        for (List<CartItem> group : groups.values()) placed.add(placeSingle(user, new PlaceOrder(req.deliveryDate(), group)));
+        Placed first = placed.get(0);
+        List<String> codes = placed.stream().map(Placed::code).toList();
+        return new Placed(first.id(), String.join(" / ", codes), first.deliveryLabel(), placed.stream().mapToDouble(Placed::weightKg).sum(), placed.stream().mapToDouble(Placed::volumeM3).sum(), placed.stream().mapToDouble(Placed::value).sum(), codes);
+    }
+
+    private Placed placeSingle(AppUser user, PlaceOrder req) {
         Outlet outlet = outletOf(user);
         if (req.items() == null || req.items().stream().noneMatch(i -> i.qty() > 0)) throw ApiException.badRequest("Your cart is empty");
-        LocalDate date = req.deliveryDate() == null ? null : LocalDate.parse(req.deliveryDate());
+        LocalDate date;
+        try { date = req.deliveryDate() == null ? null : LocalDate.parse(req.deliveryDate()); }
+        catch (java.time.format.DateTimeParseException e) { throw ApiException.badRequest("Choose a valid delivery date"); }
+        if (date != null && date.isBefore(clock.today())) throw ApiException.badRequest("Delivery date is in the past");
+        if (date != null && !rules.operating(date)) throw ApiException.badRequest("No deliveries on Sundays (non-operating day)");
         if (date == null || deliveryOptions().stream().noneMatch(o -> o.date().equals(req.deliveryDate())))
             throw ApiException.badRequest("Today's 4 PM cutoff has passed for that date. Please pick the next available delivery date.");
 
         StockOrder o = new StockOrder();
         o.setOutlet(outlet); o.setBrand(outlet.getBrand()); o.setPlacedDate(clock.today()); o.setDeliveryDate(date);
-        o.setDeliveryWindow("Before 8 AM"); o.setStatus(OrderStatus.PENDING); o.setSource("STORE");
+        o.setDeliveryWindow(rules.deliveryWindow(outlet)); o.setStatus(OrderStatus.PENDING); o.setSource("STORE");
         o.setCode(nextCode());
         double kg = 0, m3 = 0, value = 0;
         int count = 0;
@@ -107,7 +128,7 @@ public class StoreService {
         e.setKind(EventKind.ACTIVITY); e.setSeverity(Severity.INFO); e.setTitle("New stock order:");
         e.setMessage(o.getCode() + " from " + Labels.outletFull(outlet) + " (" + count + " items)."); e.setCreatedAt(clock.now());
         events.save(e);
-        return new Placed(o.getId(), o.getCode(), Labels.monthDay(date), o.getWeightKg(), o.getVolumeM3(), value);
+        return new Placed(o.getId(), o.getCode(), Labels.monthDay(date), o.getWeightKg(), o.getVolumeM3(), value, List.of(o.getCode()));
     }
 
     private String nextCode() {
@@ -153,11 +174,12 @@ public class StoreService {
         NextDelivery next = null;
         for (StockOrder o : upcoming) {
             if (o.getStatus() != OrderStatus.IN_TRANSIT) continue;
-            TripStop st = stops.findByOrder(o).stream().findFirst().orElse(null);
-            LocalTime eta = st != null && st.getEta() != null ? LocalTime.parse(st.getEta()) : LocalTime.of(7, 30);
-            long mins = Math.max(0, Duration.between(clock.now(), today.atTime(eta)).toMinutes());
+            TripStop st = stopFor(o);
+            LocalTime eta = st != null && st.getEta() != null ? LocalTime.parse(st.getEta()) : null;
+            if (eta == null) continue;
+            long mins = Duration.between(clock.now(), o.getDeliveryDate().atTime(eta)).toMinutes();
             Vehicle v = o.getVehicle();
-            String vehicle = v == null ? "-" : (v.getType() == VehicleType.REEFER ? "Chilled Box Truck" : Labels.vehicleType(v.getType())) + " (" + Labels.plate(v) + ")";
+            String vehicle = v == null ? "-" : Labels.vehicleDescription(v) + " (" + Labels.plate(v) + ")";
             String driver = st != null && st.getTrip().getDriver() != null ? st.getTrip().getDriver().getFullName() : (v == null ? "-" : v.getDriverName());
             next = new NextDelivery(eta.format(TIME), mins, vehicle, driver, o.getWeightKg(), o.getVolumeM3(),
                     "Schedule " + loaders(o) + " loaders at " + eta.minusMinutes(20).withMinute(eta.minusMinutes(20).getMinute() < 30 ? 0 : 30).format(TIME).replaceFirst("^0", ""),
@@ -174,7 +196,7 @@ public class StoreService {
                         "Order Cutoff closes " + d.minusDays(1).format(WEEKDAY) + " 4 PM", "No staff needed"));
                 continue;
             }
-            TripStop st = stops.findByOrder(o).stream().findFirst().orElse(null);
+            TripStop st = stopFor(o);
             String window = st != null && st.getEta() != null ? LocalTime.parse(st.getEta()).format(TIME) : o.getDeliveryWindow();
             String vehicle = o.getVehicle() == null ? "To be allocated" : Labels.plate(o.getVehicle());
             int n = loaders(o);
@@ -184,12 +206,19 @@ public class StoreService {
         return new Schedule(next, days);
     }
 
+    private TripStop stopFor(StockOrder o) {
+        TripStop direct=stops.findByOrder(o).stream().findFirst().orElse(null);
+        if(direct!=null || o.getTrip()==null)return direct;
+        return stops.findByTripOrderBySeqAsc(o.getTrip()).stream().filter(st->st.getOutlet().getId().equals(o.getOutlet().getId())).findFirst().orElse(null);
+    }
+
     private static int loaders(StockOrder o) { return o.getBrand() == Brand.FRESH || o.getWeightKg() > 500 ? 2 : 1; }
 
     // ---------------------------------------------------------------- receiving
     @Transactional(readOnly = true)
     public Receiving receiving(AppUser user) {
         StockOrder o = orders.findByOutletAndStatusOrderByDeliveryDateAsc(outletOf(user), OrderStatus.IN_TRANSIT).stream().findFirst().orElse(null);
+        if (o == null) o = orders.findByOutletAndStatusOrderByDeliveryDateAsc(outletOf(user), OrderStatus.DELIVERED).stream().filter(x -> x.getReceivedAt() == null).findFirst().orElse(null);
         if (o == null) return null;
         List<ReceiveLine> ls = lines.findByOrderOrderByIdAsc(o).stream()
                 .map(l -> new ReceiveLine(l.getId(), l.getName(), l.getQty(), l.getQty() + " " + plural(l.getUnit(), l.getQty()),
@@ -209,6 +238,8 @@ public class StoreService {
         StockOrder o = orders.findById(orderId).orElseThrow(() -> ApiException.notFound("Delivery not found"));
         if (!o.getOutlet().getId().equals(outletOf(user).getId())) throw ApiException.forbidden("This delivery belongs to another outlet");
         if (req.signature() == null || req.signature().isBlank()) throw ApiException.badRequest("Please sign the delivery receipt");
+        if (o.getReceivedAt() != null) throw ApiException.conflict("This delivery has already been received", null);
+        if (o.getStatus() != OrderStatus.IN_TRANSIT && o.getStatus() != OrderStatus.DELIVERED) throw ApiException.conflict("Shipment is not dispatched yet", null);
         boolean exception = false;
         Map<Long, OrderLine> byId = new HashMap<>();
         lines.findByOrderOrderByIdAsc(o).forEach(l -> byId.put(l.getId(), l));
@@ -221,6 +252,7 @@ public class StoreService {
             if (l.getReceivedCondition() != ItemCondition.GOOD || (in.receivedQty() != null && in.receivedQty() < l.getQty())) exception = true;
         }
         o.setStatus(OrderStatus.DELIVERED);
+        deferrals.findAll().stream().filter(d->d.getOrder().getId().equals(o.getId())).forEach(d->d.setResolved(true));
         o.setReceivedAt(clock.now()); o.setReceiptNotes(req.notes()); o.setReceiptSignature(req.signature());
         o.setExceptionNote(req.exceptionNote()); o.setDamagePhoto(req.photo());
 

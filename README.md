@@ -1,141 +1,72 @@
-> Production auth update: use one Username/Password login. Demo seeding is off by default; set JWT_SECRET and link persistent MySQL before deployment. Legacy demo/design details below do not override [the current rollout guide](docs/AUTH-DEPLOYMENT.md).
+# WAYNEXO — delivery operations
 
-# WAYNEXO — Role-based Delivery Operations Platform
+Public deployment: https://waynexo-production.up.railway.app/#/login
 
-Working site built from the **WAYNEXO Figma** (Dispatcher TV, Store Manager MacBook, Driver iPhone, Loader iPad).
-**Frontend:** React 19 + Vite + Tailwind CSS 4 · **Backend:** Spring Boot 3 (Java 17) · **Database:** MySQL 8 (or H2 for a quick demo)
+One Username/Password login derives the account role from MySQL. Dispatcher uses the TV control tower, Driver the mobile app, Store Manager the desktop/phone console and Loader the tablet/phone dock app. Frontend routes and backend endpoints enforce roles; drivers own their trips and loaders are restricted to their depot. Login appearance is preserved.
 
-Workflow covered end-to-end: **Plan → Prepare → Deliver → Receive**
+## Run the complete local stack
 
-```
-Store Manager places order ─► Dispatcher confirms & allocates (constraint-checked)
-        ▲                               │
-        │                               ▼
-Store receives & signs ◄── Driver delivers (POD, offline queue) ◄── Loader verifies & dispatches
+Install Docker Desktop, then from the repository root:
+
+```sh
+docker compose up --build
 ```
 
----
+Open http://localhost:8080/#/login. MySQL health checks run before the application starts. `.env.example` documents optional local port/database/JWT settings. The defaults are for isolated development only. The empty local database imports the organiser's 120 outlets, 60 vehicles and two depots plus 200 synthetic orders forming an overcapacity planning scenario. Existing data is never reset on restart.
 
-## 1. Quick start (මුලින්ම run කරන්න)
+Local seeded accounts (these are not the private Railway passwords):
 
-### Prerequisites
-- **Java 17+** and **Maven** (or use VS Code "Extension Pack for Java")
-- **Node.js 20+**
-- **MySQL 8** — optional (use the H2 profile or `docker compose up -d` instead)
-
-### Backend (Spring Boot) — port 8080
-```bash
-cd backend
-# with MySQL (user root / password root by default — change in application.yml or env vars)
-mvn spring-boot:run
-# …or without MySQL (file-based H2 database):
-mvn spring-boot:run -Dspring-boot.run.profiles=h2
-```
-The database tables are created automatically and the **raw data from the Figma screens is seeded on first start**
-(120 outlets, 60 vehicles, 2 depots, 120 daily orders, trips, deferrals, alerts…).
-Automatic destructive reseeding is disabled. See [auth rollout and safe cleanup](docs/AUTH-DEPLOYMENT.md).
-
-DB environment variables: `DB_HOST`, `DB_PORT`, `DB_NAME` (default `waynexo`), `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`.
-
-### Frontend (React) — port 5173
-```bash
-cd frontend
-npm install
-npm run dev          # http://localhost:5173  (API calls are proxied to :8080)
-```
-Open on other devices in the same Wi-Fi with `http://<your-mac-ip>:5173` (phone = Driver, iPad = Loader, TV = Dispatcher).
-
-### Production build (single server)
-```bash
-cd frontend && npm run build:backend      # builds React into backend/src/main/resources/static
-cd ../backend && mvn package && java -jar target/waynexo-backend-1.0.0.jar
-```
-The repo already contains a pre-built copy of the frontend in `backend/src/main/resources/static`,
-so the backend alone serves the whole site at http://localhost:8080.
-
-## Deploy to Railway
-
-**Option A — Dockerfile (recommended, builds frontend + backend):**
-1. Push this folder to GitHub (the `Dockerfile` and `railway.json` must be in the repo root).
-2. Railway → New Project → Deploy from GitHub repo.
-3. + Create → Database → **MySQL**. In the app service → Variables → *Add Reference*:
-   `MYSQLHOST`, `MYSQLPORT`, `MYSQLDATABASE`, `MYSQLUSER`, `MYSQLPASSWORD` (or just `MYSQL_URL`). Add `JWT_SECRET`.
-4. Settings → Networking → Generate Domain.
-
-**Option B — no Docker:** Settings → Source → **Root Directory = `backend`**. Railway builds the Maven
-project directly and serves the pre-built frontend.
-
-If no MySQL is linked yet, the app still starts on Railway with an embedded demo database
-(data resets on every redeploy) — link MySQL for permanent data.
-Health check: `GET /api/public/login-options`.
-
-VS Code: open the `WAYNEXO` folder → Run & Debug → **"WAYNEXO Backend (H2 – no MySQL needed)"**.
-
----
-
-## 2. Login — each role gets its own interface
-
-| Role | Device (Figma frame) | Login page | Username | Password |
-|---|---|---|---|---|
-| Dispatcher | TV 1280×720 | `/#/login/dispatcher` | `harsha.perera@waynexo.lk` (or `harsha`) | `dispatch123` |
-| Store Manager | MacBook Air 1280×832 | `/#/login/store` | `nimal.silva@keells.com` | `store123` |
-| Driver | iPhone 13 Pro 390×844 | `/#/login/driver` | `WP-9042` | `driver123` |
-| Loader | iPad Pro 11" 1194×834 | `/#/login/loader` | `WP-042` (badge scan, no password) | — |
-
-- `/#/login` **auto-detects the device** (phone → Driver, tablet → Loader, 16:9 TV → Dispatcher, laptop → Store).
-- Whoever signs in is always sent to **their own role's interface** — the backend issues a JWT with the role,
-  and every API is protected with `@RequireRole`, so a driver can never open dispatcher data (HTTP 403).
-- Demo credentials are pre-filled (like the Figma). Set `VITE_DEMO=false` to disable that.
-
-## 3. Aspect-ratio optimised UI (Figma is never changed)
-
-Every screen is built at its **exact Figma frame size** and rendered through `components/Stage.jsx`, which scales
-the whole frame uniformly to fit any screen (letter-boxed, aspect ratio preserved). So the layout looks exactly like
-the Figma on a phone, iPad, MacBook or a 4K TV — nothing reflows or breaks.
-Reference exports of all 24 Figma frames are in `docs/figma-screens/`.
-
-## 4. Suggested demo flow (competition)
-
-1. **Store Manager** → Place Order → adjust cart → *Submit Stock Order* (watch the live 4 PM cutoff timer).
-2. **Dispatcher (TV)** → Orders → filter, *Bulk Confirm* → Planning → **drag** an order onto a vehicle
-   (try a chilled order on a dry-box truck → *CONSTRAINT ERROR*: reefer, van-only access, weight, volume, fuel quota, 2 trips/day).
-3. **Loader (iPad)** → open WP-RE-04 → reverse-order manifest → verify each stop (+/-, GOOD/DAMAGED/SHORT/MISSING),
-   *Flag Shortfall* → *Dispatch Vehicle* (seal locked).
-4. **Driver (iPhone)** → *Start Trip 1* (only possible after the dock released it) → stop → *Confirm Arrival* →
-   Proof of Delivery (draw signature, photo) → *Report* an exception. Turn Wi-Fi off: deliveries are **queued offline**
-   and synced automatically when the connection returns (`Offline` tab).
-5. **Dispatcher** → Tracking (live route progress + driver feeds) and Dashboard alerts update automatically.
-6. **Store Manager** → Receive Shipment → verify items, log damage photo, sign → History shows *Delivered*.
-   Deferred order → *View Deferral Alert* → Acknowledge. Dispatcher → Deferrals → *Resolve* / *Edit Notes*.
-
-## 5. Project structure
-
-```
-backend/   Spring Boot API
-  domain/      JPA entities (Outlet, Vehicle, StockOrder, Trip, TripStop, StopItem, Deferral, OpsEvent…)
-  repo/        Spring Data repositories
-  service/     Business logic per role (DispatcherService, StoreService, DriverService, LoaderService)
-  web/         REST controllers (/api/dispatcher, /api/store, /api/driver, /api/loader, /api/auth)
-  security/    JWT (HS256), PBKDF2 password hashing, role interceptor
-  resources/seed/*.json   raw data from the Figma + challenge scale
-frontend/  React app
-  src/screens/{dispatcher,store,driver,loader}   one file per Figma frame
-  src/components/Stage.jsx                        aspect-ratio scaler
-  src/lib/offline.js                              driver offline cache + outbox sync
-tools/     seed/entity generators, Figma exporter plugin
-```
-
-## 6. Key API endpoints
-
-| Method | Path | Role |
+| Role | Username | Local password |
 |---|---|---|
-| POST | `/api/auth/login` · GET `/api/auth/me` | all |
-| GET | `/api/dispatcher/overview` `/orders` `/planning` `/fleet` `/tracking` `/deferrals` | Dispatcher |
-| POST | `/api/dispatcher/orders/confirm` `/planning/assign` `/deferrals/{id}/resolve` | Dispatcher |
-| GET/POST | `/api/store/catalog` `/orders` `/schedule` `/receiving` `/deferral` | Store Manager |
-| GET/POST | `/api/driver/home` `/trips/{id}/start` `/stops/{id}/pod` `/exceptions` `/sync` | Driver |
-| GET/POST | `/api/loader/queue` `/trips/{id}/manifest` `/stops/{id}/verify` `/trips/{id}/dispatch` | Loader |
+| Dispatcher | harsha | dispatch123 |
+| Driver | suresh | driver123 |
+| Store Manager | nimal | store123 |
+| Loader, Peliyagoda | kasun | demo-loader123 |
+| Loader, Kandy | ruwan | demo-loader123 |
 
----
-Logo/avatars in `frontend/public/img` were cropped from the Figma exports — for a sharper logo, export
-the original logo from Figma as PNG (2×) and replace `frontend/public/img/logo.png`.
+Suresh drives VEH004; Nimal manages OUT004. Other fleet driver profiles have no password, so they cannot authenticate until separately provisioned. There is no admin dashboard/account in this application.
+
+## Judge walkthrough
+
+1. Store: sign in as nimal. Add a chilled item and an ambient item, choose an operating delivery date and place the cart. The confirmation shows two order codes. Check Order History.
+2. Dispatcher: sign in as harsha. Confirm those pending orders. Select Trip 1, select an order and click VEH004 (or drag onto it). Repeat for the other order. The constraints verify home depot, brand/district, temperature, van access, whole-order weight/volume, time/window and weekly fuel. Select **Release plan to dock**. The created trip now appears in the loader queue and driver app. Use Auto-allocate on the larger local scenario to demonstrate prioritisation and unavoidable deferrals, or deliberately attempt an incompatible vehicle and show the error. Deferring a selected order requires a reason and note.
+3. Loader: sign in as kasun. Open the released VEH004 manifest. Load in reverse stop order. Enter each loaded quantity and condition. For one item, load one fewer and flag the shortfall; then verify. Mark refrigerated compartments pre-cooled. Dispatch after all stops are verified.
+4. Driver: sign in as suresh. Start the dock-released run. Open each current stop, mark arrival, record recipient/signature and submit POD. Demonstrate one POD or exception with connectivity off, then reconnect and sync the offline queue. Duplicate POD replay does not create another completion.
+5. Store: return to nimal. Delivery Schedule shows the planned stop ETA and reports lateness instead of a false 'arriving now' claim. Receive Shipment remains available after driver POD until a signed store receipt is saved. Enter actual quantities/conditions and confirm. Show the deferral alert for a separate deferred order.
+6. Route protection: manually attempt another role's URL; it redirects to the account's own app. The backend independently returns 403 for a wrong-role request.
+
+A mobile browser can test Driver, Loader and Store. Dispatcher is optimised for a widescreen TV. Operational dates are in Asia/Colombo. The local seeded scenario starts on the next operating day; the walkthrough can act on a released scheduled run without changing the device clock.
+
+## Development and tests
+
+Java 17+, Maven and Node 22 are used by the Docker build. For separate development, start MySQL, supply a private JWT_SECRET and database settings, run the backend with Maven and run `npm ci` / `npm run dev` in frontend. Vite proxies `/api` to port 8080; the packaged frontend and backend share the same origin.
+
+```sh
+cd backend
+mvn test
+cd ../frontend
+npm ci
+npm run lint
+npm test
+npm run build
+npm run test:e2e
+```
+
+Browser contract tests use controlled API fixtures. Spring integration tests cover real database authentication/persistence and the released order-to-receipt workflow. The browser tests require Chrome (override CHROME_PATH if needed). Docker validation covers the packaged app with MySQL.
+
+## Railway configuration
+
+Keep the existing persistent MYSQL_URL and a strong JWT_SECRET. Existing WAYNEXO_ACCOUNT_PASSWORDS values are private and should not be committed. With an already populated database keep WAYNEXO_DEMO_SEED, WAYNEXO_MASTER_SEED and WAYNEXO_RESEED false. Production is not populated with the local synthetic scenario. Deployment uses the root Dockerfile and listens on injected PORT. `/api/health` is the readiness check; role login and database reads must also be verified after a deployment.
+
+See [safe data cleanup and import](docs/DATA-CLEANUP.md) before production maintenance. Maintenance endpoints are disabled by default and enabled only during the backed-up one-time official master import. Disable them immediately afterwards.
+
+## Documentation and departures
+
+- [Architecture and data model](docs/ARCHITECTURE.md)
+- [AI disclosure](docs/AI-DISCLOSURE.md)
+- [Dataset provenance](docs/DATASET-PROVENANCE.md)
+- [Safe maintenance](docs/DATA-CLEANUP.md)
+
+Compared with the original design-based implementation, the delivered flow uses one account-derived login, protected routes, explicit constrained plan release, separated ambient/chilled orders, official master data, calculated ETAs/fuel/time budgets and phone reflow for Store/Loader. Invented weather alerts and decorative phone status bars were removed. These are implementation departures; no unprovided Designathon submission is represented as verified.
+
+For submission, organisers require a monorepo named `TeamName_SolutionName`, a public URL with four role credentials and a 5–8 minute unlisted YouTube walkthrough. The current repository is `waynexo`; the team must confirm its official team name and submission repository naming. Supply Railway judge credentials privately in the submission form rather than publishing deployment secrets here.

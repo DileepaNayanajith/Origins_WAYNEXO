@@ -26,5 +26,5 @@ public final class DriverDtos {
 
     public record QueuedPod(Long stopId, PodRequest pod) {}
     public record SyncRequest(List<QueuedPod> pods, List<ExceptionRequest> exceptions) {}
-    public record SyncResult(int applied, int skipped) {}
+    public record SyncResult(int applied, int skipped, List<String> acceptedClientIds, List<String> rejectedClientIds) {}
 }

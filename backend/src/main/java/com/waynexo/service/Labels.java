@@ -35,8 +35,10 @@ public final class Labels {
         return switch (t) { case REEFER -> "Refrigerated Truck"; case DRY_BOX -> "Dry-Box Truck"; case VAN -> "Small Delivery Van"; };
     }
 
+    public static String vehicleDescription(Vehicle v) { return vehicleType(v.getType()) + (v.getType()==VehicleType.VAN && v.isReefer()?" (Refrigerated)":""); }
+
     /** Registration-style code used on the dock/driver screens, e.g. RE-04 -> WP-RE-04. */
-    public static String plate(Vehicle v) { return v == null ? "-" : "WP-" + v.getCode(); }
+    public static String plate(Vehicle v) { return v == null ? "-" : v.getCode().startsWith("VEH") ? v.getCode() : "WP-" + v.getCode(); }
 
     public static String outletName(Outlet o) { return brandTitle(o.getBrand()) + " - " + o.getName(); }
 

@@ -24,12 +24,21 @@ public class ApiExceptionHandler {
         return ResponseEntity.status(e.getStatus()).body(body);
     }
 
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    public ResponseEntity<Map<String, Object>> missing(Exception e) {
+        return ResponseEntity.status(404).body(Map.of("status", 404, "message", "Resource not found"));
+    }
+
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String,Object>> conflict(Exception e) { return ResponseEntity.status(409).body(Map.of("status",409,"message","This operation conflicts with an existing record. Refresh and retry.")); }
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String,Object>> invalid(Exception e) { return ResponseEntity.badRequest().body(Map.of("status",400,"message","Invalid request data")); }
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> other(Exception e) {
         log.error("Unhandled error", e);
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("status", 500);
-        body.put("message", "Something went wrong: " + e.getMessage());
+        body.put("message", "Something went wrong. Please try again.");
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
     }
 }

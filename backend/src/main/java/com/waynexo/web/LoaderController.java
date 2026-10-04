@@ -23,26 +23,26 @@ public class LoaderController {
     public DockQueue queue() { return service.queue(auth.user()); }
 
     @GetMapping("/trips/{id}/manifest")
-    public Manifest manifest(@PathVariable Long id) { return service.manifest(id); }
+    public Manifest manifest(@PathVariable Long id) { service.checkTripAccess(auth.user(), id); return service.manifest(id); }
 
     @PostMapping("/trips/{id}/precool")
-    public Map<String, Boolean> precool(@PathVariable Long id) { service.precool(id); return Map.of("ok", true); }
+    public Map<String, Boolean> precool(@PathVariable Long id) { service.checkTripAccess(auth.user(), id); service.precool(id); return Map.of("ok", true); }
 
     @GetMapping("/stops/{id}/verification")
-    public Verification verification(@PathVariable Long id) { return service.verification(id); }
+    public Verification verification(@PathVariable Long id) { service.checkStopAccess(auth.user(), id); return service.verification(id); }
 
     @PutMapping("/items/{id}")
-    public Verification item(@PathVariable Long id, @RequestBody ItemUpdate update) { return service.updateItem(id, update); }
+    public Verification item(@PathVariable Long id, @RequestBody ItemUpdate update) { service.checkItemAccess(auth.user(), id); return service.updateItem(id, update); }
 
     @PostMapping("/stops/{id}/flag-shortfall")
-    public Verification flag(@PathVariable Long id) { return service.flagShortfall(auth.user(), id); }
+    public Verification flag(@PathVariable Long id) { service.checkStopAccess(auth.user(), id); return service.flagShortfall(auth.user(), id); }
 
     @PostMapping("/stops/{id}/verify")
-    public Verification verify(@PathVariable Long id) { return service.verifyStop(id); }
+    public Verification verify(@PathVariable Long id) { service.checkStopAccess(auth.user(), id); return service.verifyStop(id); }
 
     @GetMapping("/trips/{id}/dispatch")
-    public DispatchView dispatchView(@PathVariable Long id) { return service.dispatchView(id); }
+    public DispatchView dispatchView(@PathVariable Long id) { service.checkTripAccess(auth.user(), id); return service.dispatchView(id); }
 
     @PostMapping("/trips/{id}/dispatch")
-    public DispatchView dispatch(@PathVariable Long id) { return service.dispatch(auth.user(), id); }
+    public DispatchView dispatch(@PathVariable Long id) { service.checkTripAccess(auth.user(), id); return service.dispatch(auth.user(), id); }
 }

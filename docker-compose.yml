@@ -1,16 +1,32 @@
-# Optional: MySQL 8 for WAYNEXO (if you don't have MySQL installed).
-#   docker compose up -d
 services:
   mysql:
     image: mysql:8.4
-    container_name: waynexo-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-local-waynexo-db}
       MYSQL_DATABASE: waynexo
       TZ: Asia/Colombo
-    ports:
-      - "3306:3306"
     volumes:
       - waynexo-mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+  app:
+    build: .
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_NAME: waynexo
+      DB_USER: root
+      DB_PASSWORD: ${DB_PASSWORD:-local-waynexo-db}
+      JWT_SECRET: ${JWT_SECRET:-local-development-only-secret-change-for-production-2026}
+      WAYNEXO_DEMO_SEED: "true"
+      WAYNEXO_MASTER_SEED: "false"
+      WAYNEXO_RESEED: "false"
 volumes:
   waynexo-mysql:

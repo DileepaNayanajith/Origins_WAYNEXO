@@ -77,6 +77,10 @@ class AuthFlowTest {
         mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON).content("{\"username\":\"loader\",\"password\":\"valid-pass\"}")) .andExpect(status().isUnauthorized());
         assertNull(new JwtService("expired-test-secret-at-least-32-characters", -1).verify(new JwtService("expired-test-secret-at-least-32-characters", -1).issue(1,Role.DRIVER)));
     }
+    @Test void healthIsPublicAndUnknownApisReturnGeneric404() throws Exception {
+        mvc.perform(get("/api/health")).andExpect(status().isOk()).andExpect(jsonPath("$.status").value("ok"));
+        mvc.perform(get("/api/no-such-resource")).andExpect(status().isNotFound()).andExpect(jsonPath("$.message").value("Resource not found"));
+    }
     @Test void incompleteAccountsCannotUseOperationalApi() throws Exception {
         mvc.perform(get("/api/driver/home").header("Authorization","Bearer " + login(Role.DRIVER))).andExpect(status().isConflict());
     }

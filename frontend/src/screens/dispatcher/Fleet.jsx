@@ -33,7 +33,7 @@ export default function Fleet() {
             options={[{ value: 'ALL', label: 'All States' }, { value: 'AVAILABLE', label: 'Available' }, { value: 'EN_ROUTE', label: 'En Route' }, { value: 'LOADING', label: 'Loading' }, { value: 'IN_WORKSHOP', label: 'In Workshop' }]} />
         </div>
         <p className="font-normal leading-[normal] text-[#56616d] text-[11.556px] whitespace-nowrap">
-          {s ? `${s.total} Vehicles • ${s.reefers} Reefers • ${s.dryBox} Dry Box • ${s.vans} Vans` : ''}
+          {s ? `${s.total} Vehicles • ${s.reefers} Reefer Trucks • ${s.dryBox} Dry Box • ${s.vans} Vans (${s.chilledVans || 0} refrigerated)` : ''}
         </p>
       </div>
       <div className="grid grid-cols-3 gap-[17.778px] content-start flex-[1_0_0] min-h-px w-full overflow-y-auto no-scrollbar pb-[4px]">

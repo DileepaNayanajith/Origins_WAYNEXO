@@ -42,10 +42,10 @@ public class DispatcherController {
     }
 
     @GetMapping("/planning")
-    public Planning planning() { return service.planning(); }
+    public Planning planning(@RequestParam(defaultValue="1") int tripNumber) { return service.planning(tripNumber); }
 
     @PostMapping("/planning/assign")
-    public BuilderVehicle assign(@RequestBody AssignRequest req) { return service.assign(req.orderId(), req.vehicleId()); }
+    public BuilderVehicle assign(@RequestBody AssignRequest req) { return service.assign(req.orderId(), req.vehicleId(), req.tripNumber()); }
 
     @PostMapping("/planning/unassign")
     public Map<String, Boolean> unassign(@RequestBody AssignRequest req) { service.unassign(req.orderId()); return Map.of("ok", true); }

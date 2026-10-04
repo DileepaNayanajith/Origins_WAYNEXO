@@ -8,10 +8,11 @@ import { fmtNum } from '../../lib/fig'
 
 // Figma: "Loader iPad Pro 11\" - 3" — reverse-sequence trip manifest
 export default function Manifest({ id }) {
-  const [m, reload] = useApi('/loader/trips/' + id + '/manifest')
+  const [m, reload, {error}] = useApi('/loader/trips/' + id + '/manifest')
   const [toast, setToast] = useState(null)
   const precool = async () => { await api.post(`/loader/trips/${id}/precool`); reload(); setToast({ msg: 'All reefer compartments marked pre-cooled' }); setTimeout(() => setToast(null), 2200) }
   const bar = (v, max, color) => <div className="mt-[6px] h-[8px] rounded-full bg-[#f5f7fa] overflow-hidden"><div className="h-full rounded-full" style={{ width: `${Math.min(100, (v / max) * 100)}%`, background: color }} /></div>
+  if (error) return <Shell title="Trip unavailable"><div className="p-6"><p role="alert">{error.message}</p><button onClick={() => navigate('/loader')} className="mt-4 rounded-lg bg-white px-5 py-3">Back to queue</button></div></Shell>
   return (
     <Shell title={`${m?.plate ?? ''} Trip Manifest`}>
       {m && <>

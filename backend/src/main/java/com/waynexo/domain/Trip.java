@@ -5,7 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "trips")
+@Table(name = "trips", uniqueConstraints = @UniqueConstraint(name="uk_trip_vehicle_date_number", columnNames={"vehicle_id","trip_date","number_no"}))
 public class Trip {
 
     @Id
@@ -63,6 +63,12 @@ public class Trip {
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
+    private int plannedMinutes;
+    private double reservedFuelL;
+    public int getPlannedMinutes() { return plannedMinutes; }
+    public void setPlannedMinutes(int value) { plannedMinutes=value; }
+    public double getReservedFuelL() { return reservedFuelL; }
+    public void setReservedFuelL(double value) { reservedFuelL=value; }
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public Vehicle getVehicle() { return vehicle; }

@@ -9,3 +9,6 @@ WAYNEXO*.zip
 *.log
 .git
 .vscode
+
+.env
+*.private.json

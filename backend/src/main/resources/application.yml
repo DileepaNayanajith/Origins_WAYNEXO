@@ -28,9 +28,10 @@ waynexo:
   # Change this secret in production (any long random string)
   jwt-secret: ${JWT_SECRET}
   jwt-hours: 12
-  # Re-create demo data on every start (handy before a demo)
+  # Empty-database bootstrap only. Never resets an existing database.
   reseed: ${WAYNEXO_RESEED:false}
   demo-seed: ${WAYNEXO_DEMO_SEED:false}
   master-seed: ${WAYNEXO_MASTER_SEED:false}
+  maintenance-enabled: ${WAYNEXO_MAINTENANCE_ENABLED:false}
   account-passwords: ${WAYNEXO_ACCOUNT_PASSWORDS:}
   cors-origins: ${CORS_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}

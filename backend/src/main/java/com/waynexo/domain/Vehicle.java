@@ -49,6 +49,12 @@ public class Vehicle {
     @Column(name = "max_trips")
     private int maxTrips;
 
+    private Boolean reefer;
+    private double kmPerL;
+    public boolean isReefer() { return reefer == null ? type == VehicleType.REEFER : reefer; }
+    public void setReefer(boolean value) { reefer = value; }
+    public double getKmPerL() { return kmPerL; }
+    public void setKmPerL(double value) { kmPerL = value; }
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getCode() { return code; }

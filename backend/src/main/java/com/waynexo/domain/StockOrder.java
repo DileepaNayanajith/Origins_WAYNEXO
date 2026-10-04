@@ -80,6 +80,10 @@ public class StockOrder {
     @Column(name = "exception_note", length = 1000)
     private String exceptionNote;
 
+    private int plannedTrip = 1;
+    public int getPlannedTrip() { return plannedTrip <= 0 ? 1 : plannedTrip; }
+    public void setPlannedTrip(int value) { plannedTrip = value; }
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getCode() { return code; }

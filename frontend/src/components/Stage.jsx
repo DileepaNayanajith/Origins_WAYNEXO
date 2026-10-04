@@ -11,6 +11,7 @@ export default function Stage({ width, height, bg = '#f5f7fa', display = 'tv', c
     return () => { window.removeEventListener('resize', on); window.visualViewport?.removeEventListener('resize', on) }
   }, [])
   const layout = displayLayout(width, height, vp.w, vp.h, display)
+  if (vp.w < (display === 'tablet' ? 1024 : 768) && ['pc', 'tablet'].includes(display)) return <div className={`phone-role role-display-${display}`} style={{background:bg}}>{children}</div>
   return <div className={`role-display role-display-${display}`} style={{ position: 'fixed', inset: 0, background: bg, overflow: layout.scroll ? 'auto' : 'hidden' }}>
     <div style={{ position: 'relative', width: Math.max(vp.w, layout.canvasWidth), height: Math.max(vp.h, layout.canvasHeight) }}>
       <div style={{ position: 'absolute', width, height, left: layout.left, top: layout.top, transform: `scale(${layout.scale})`, transformOrigin: '0 0' }}>

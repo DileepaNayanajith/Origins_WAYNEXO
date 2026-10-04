@@ -26,12 +26,13 @@ public class DispatcherService {
     private final TripRepository trips;
     private final TripStopRepository stops;
     private final OpsClock clock;
+    private final ChallengeRules rules;
 
     public DispatcherService(StockOrderRepository orders, VehicleRepository vehicles, OutletRepository outlets, DeferralRepository deferrals,
                              OpsEventRepository events, PlanningConflictRepository conflicts, TripRepository trips, TripStopRepository stops,
-                             OpsClock clock) {
+                             OpsClock clock, ChallengeRules rules) {
         this.orders = orders; this.vehicles = vehicles; this.outlets = outlets; this.deferrals = deferrals; this.events = events;
-        this.conflicts = conflicts; this.trips = trips; this.stops = stops; this.clock = clock;
+        this.conflicts = conflicts; this.trips = trips; this.stops = stops; this.clock = clock; this.rules = rules;
     }
 
     // ---------------------------------------------------------------- SEE
@@ -53,7 +54,7 @@ public class DispatcherService {
 
         List<VehicleState> busy = List.of(VehicleState.EN_ROUTE, VehicleState.LOADING);
         Capacity cap = new Capacity(
-                Labels.pct(vehicles.countByTypeAndStateIn(VehicleType.REEFER, busy), vehicles.countByType(VehicleType.REEFER)),
+                Labels.pct(vehicles.findAll().stream().filter(v->v.isReefer() && busy.contains(v.getState())).count(), vehicles.findAll().stream().filter(Vehicle::isReefer).count()),
                 Labels.pct(vehicles.countByTypeAndStateIn(VehicleType.DRY_BOX, busy), vehicles.countByType(VehicleType.DRY_BOX)));
 
         List<Event> alerts = events.findTop20ByKindAndResolvedFalseOrderByCreatedAtDesc(EventKind.ALERT).stream().map(this::event).toList();
@@ -88,7 +89,7 @@ public class DispatcherService {
     public int confirm(List<Long> ids) {
         int n = 0;
         for (StockOrder o : orders.findAllById(ids == null ? List.of() : ids)) {
-            if (o.getStatus() == OrderStatus.PENDING) { o.setStatus(OrderStatus.CONFIRMED); n++; }
+            if ((o.getStatus() == OrderStatus.PENDING || o.getStatus() == OrderStatus.DEFERRED)) { o.setStatus(OrderStatus.CONFIRMED); n++; }
         }
         return n;
     }
@@ -107,7 +108,8 @@ public class DispatcherService {
 
     // ---------------------------------------------------------------- DECIDE: planning workspace
     @Transactional(readOnly = true)
-    public Planning planning() {
+    public Planning planning() { return planning(1); }
+    public Planning planning(int tripNumber) {
         Map<String, List<PlanOrder>> groups = new TreeMap<>();
         for (StockOrder o : orders.findByStatusOrderByIdAsc(OrderStatus.CONFIRMED)) {
             groups.computeIfAbsent(o.getOutlet().getDistrict(), k -> new ArrayList<>()).add(planOrder(o));
@@ -119,7 +121,7 @@ public class DispatcherService {
         List<BuilderVehicle> vs = vehicles.findAllByOrderByIdAsc().stream()
                 .filter(v -> v.getState() == VehicleState.AVAILABLE)
                 .sorted(Comparator.comparing((Vehicle v) -> v.getType().ordinal()).thenComparing(Vehicle::getCode))
-                .map(this::builder).toList();
+                .map(v -> builder(v, tripNumber)).toList();
         List<Conflict> c = conflicts.findAllByOrderByCreatedAtDesc().stream()
                 .map(x -> new Conflict(x.getId(), x.getVehicleLabel(), x.getMessage())).toList();
         return new Planning(g, vs, c, counts());
@@ -131,30 +133,42 @@ public class DispatcherService {
                 o.getVolumeM3(), Labels.needsReefer(o.getTempClass()), o.getOutlet().isVanOnlyAccess());
     }
 
-    private BuilderVehicle builder(Vehicle v) {
-        List<StockOrder> assigned = orders.findByVehicleAndStatus(v, OrderStatus.ASSIGNED);
+    private BuilderVehicle builder(Vehicle v) { return builder(v, 1); }
+    private BuilderVehicle builder(Vehicle v, int number) {
+        List<StockOrder> assigned = orders.findByVehicleAndStatus(v, OrderStatus.ASSIGNED).stream().filter(o -> o.getPlannedTrip()==number).toList();
         double kg = assigned.stream().mapToDouble(StockOrder::getWeightKg).sum();
         double m3 = assigned.stream().mapToDouble(StockOrder::getVolumeM3).sum();
         List<Assigned> a = assigned.stream().map(o -> new Assigned(o.getId(), o.getCode(), o.getOutlet().getName(), o.getBrand().name())).toList();
-        return new BuilderVehicle(v.getId(), v.getCode(), Labels.plate(v), Labels.vehicleType(v.getType()), v.getType().name(), v.getState().name(),
+        return new BuilderVehicle(v.getId(), v.getCode(), Labels.plate(v), Labels.vehicleDescription(v), v.getType().name(), v.getState().name(),
                 v.getDepot().getShortName() + " Depot", v.getCapacityKg(), v.getCapacityM3(), kg, m3, v.getFuelUsedL(), v.getFuelQuotaL(),
                 v.getTripsToday(), v.getMaxTrips(), a);
     }
 
     /** Assigns an order to a vehicle after checking every challenge constraint. Violations are logged as conflicts. */
     @Transactional(noRollbackFor = ApiException.class)
-    public BuilderVehicle assign(Long orderId, Long vehicleId) {
+    public BuilderVehicle assign(Long orderId, Long vehicleId) { return assign(orderId, vehicleId, 1); }
+    @Transactional(noRollbackFor = ApiException.class)
+    public BuilderVehicle assign(Long orderId, Long vehicleId, Integer requestedTrip) {
         StockOrder o = orders.findById(orderId).orElseThrow(() -> ApiException.notFound("Order not found"));
-        Vehicle v = vehicles.findById(vehicleId).orElseThrow(() -> ApiException.notFound("Vehicle not found"));
+        Vehicle v = vehicles.findLockedById(vehicleId).orElseThrow(() -> ApiException.notFound("Vehicle not found"));
+        int tripNumber = requestedTrip == null ? 1 : requestedTrip;
+        if (tripNumber < 1 || tripNumber > Math.min(2, v.getMaxTrips())) throw ApiException.badRequest("Choose Trip 1 or Trip 2 within this vehicle's limit");
+        if (o.getTrip() != null || (o.getStatus() != OrderStatus.CONFIRMED && o.getStatus() != OrderStatus.ASSIGNED)) throw ApiException.conflict("Only confirmed, unreleased orders can be assigned", null);
         String label = v.getCode() + " (" + Labels.vehicleType(v.getType()).replace("Small Delivery ", "") + ")";
 
-        List<StockOrder> current = orders.findByVehicleAndStatus(v, OrderStatus.ASSIGNED);
+        List<StockOrder> current = orders.findByVehicleAndStatus(v, OrderStatus.ASSIGNED).stream()
+                .filter(x -> !x.getId().equals(o.getId()) && x.getPlannedTrip() == tripNumber && x.getDeliveryDate().equals(o.getDeliveryDate())).toList();
         double kg = current.stream().mapToDouble(StockOrder::getWeightKg).sum() + o.getWeightKg();
         double m3 = current.stream().mapToDouble(StockOrder::getVolumeM3).sum() + o.getVolumeM3();
 
+        int previousTrip = o.getPlannedTrip();
+        o.setPlannedTrip(tripNumber);
+        List<StockOrder> candidate = new ArrayList<>(current); candidate.add(o);
+        try { rules.validate(v, candidate); } finally { o.setPlannedTrip(previousTrip); }
         String error = null;
-        if (v.getState() == VehicleState.IN_WORKSHOP) error = v.getCode() + " is in the workshop and cannot take loads.";
-        else if (Labels.needsReefer(o.getTempClass()) && v.getType() != VehicleType.REEFER)
+        if (!o.getOutlet().getDepot().getId().equals(v.getDepot().getId())) error = "Vehicle " + v.getCode() + " is based at " + v.getDepot().getName() + "; outlet is served from " + o.getOutlet().getDepot().getName() + ".";
+        else if (v.getState() == VehicleState.IN_WORKSHOP) error = v.getCode() + " is in the workshop and cannot take loads.";
+        else if (Labels.needsReefer(o.getTempClass()) && !v.isReefer())
             error = "Assigned " + o.getCode() + " requires chilled temperature compartment, but " + v.getCode() + " is ambient only.";
         else if (o.getOutlet().isVanOnlyAccess() && v.getType() != VehicleType.VAN)
             error = o.getCode() + " outlet has van-only access, but " + v.getCode() + " is a " + Labels.vehicleType(v.getType()).toLowerCase() + ".";
@@ -162,10 +176,7 @@ public class DispatcherService {
             error = "Weight limit exceeded: " + Labels.num(kg) + "kg / " + Labels.num(v.getCapacityKg()) + "kg on " + v.getCode() + ".";
         else if (m3 > v.getCapacityM3())
             error = "Volume limit exceeded: " + Labels.num1(m3) + "m³ / " + Labels.num1(v.getCapacityM3()) + "m³ on " + v.getCode() + ".";
-        else if (v.getFuelUsedL() >= v.getFuelQuotaL())
-            error = "Fuel quota reached for " + v.getCode() + " (" + Labels.num(v.getFuelUsedL()) + " / " + Labels.num(v.getFuelQuotaL()) + "L).";
-        else if (v.getTripsToday() >= v.getMaxTrips())
-            error = v.getCode() + " already completed the maximum of " + v.getMaxTrips() + " trips today.";
+
 
         if (error != null) {
             PlanningConflict c = new PlanningConflict();
@@ -173,6 +184,7 @@ public class DispatcherService {
             conflicts.save(c);
             throw ApiException.conflict(error, new Conflict(c.getId(), c.getVehicleLabel(), c.getMessage()));
         }
+        o.setPlannedTrip(tripNumber);
         o.setVehicle(v);
         o.setStatus(OrderStatus.ASSIGNED);
         return builder(v);
@@ -190,14 +202,14 @@ public class DispatcherService {
     public Fleet fleet(String type, String depot, String state) {
         List<Vehicle> all = vehicles.findAllByOrderByIdAsc();
         List<FleetVehicle> list = all.stream()
-                .filter(v -> isAll(type) || v.getType().name().equalsIgnoreCase(type))
+                .filter(v -> isAll(type) || ("REEFER".equalsIgnoreCase(type)?v.isReefer():v.getType().name().equalsIgnoreCase(type)))
                 .filter(v -> isAll(depot) || v.getDepot().getCode().equalsIgnoreCase(depot))
                 .filter(v -> isAll(state) || v.getState().name().equalsIgnoreCase(state))
-                .map(v -> new FleetVehicle(v.getId(), v.getCode(), v.getType().name(), Labels.vehicleType(v.getType()), v.getDepot().getShortName(),
+                .map(v -> new FleetVehicle(v.getId(), v.getCode(), v.getType().name(), Labels.vehicleDescription(v), v.getDepot().getShortName(),
                         v.getState().name(), v.getFuelUsedL(), v.getFuelQuotaL(), v.getDriverName(), v.getTripsToday()))
                 .toList();
         FleetSummary s = new FleetSummary(all.size(), vehicles.countByType(VehicleType.REEFER), vehicles.countByType(VehicleType.DRY_BOX),
-                vehicles.countByType(VehicleType.VAN));
+                vehicles.countByType(VehicleType.VAN), all.stream().filter(v->v.getType()==VehicleType.VAN && v.isReefer()).count());
         return new Fleet(list, s, counts());
     }
 

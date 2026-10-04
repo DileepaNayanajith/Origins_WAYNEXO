@@ -17,7 +17,7 @@ const NAV = [
 export const todayLabel = () =>
   'Today: ' + new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 
-export default function DispatcherShell({ active, title, subtitle, counts, alerts = 1, children, bodyClass = '' }) {
+export default function DispatcherShell({ active, title, subtitle, counts, alerts = 1, children, toolbar, bodyClass = '' }) {
   const { user, logout } = useAuth()
   const [menu, setMenu] = useState(false)
   return (
@@ -89,6 +89,7 @@ export default function DispatcherShell({ active, title, subtitle, counts, alert
               </Link>
             </div>
           </div>
+          {toolbar && <div className="px-[28.444px] pt-[12px] w-full">{toolbar}</div>}
           <div className={`flex flex-[1_0_0] ${bodyClass.includes('flex-row') ? '' : 'flex-col'} items-start min-h-px p-[28.444px] relative w-full ${bodyClass}`}>
             {children}
           </div>

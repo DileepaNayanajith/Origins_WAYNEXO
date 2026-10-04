@@ -34,7 +34,7 @@ public class LoaderService {
     @Transactional(readOnly = true)
     public DockQueue queue(AppUser loader) {
         String depot = loader.getDepot() == null ? "PLG" : loader.getDepot().getCode();
-        List<QueueRow> rows = trips.findByTripDateOrderByIdAsc(clock.today()).stream()
+        List<QueueRow> rows = trips.findAll().stream()
                 .filter(t -> AT_DOCK.contains(t.getStatus()) && t.getVehicle().getDepot().getCode().equals(depot))
                 .sorted(Comparator.comparing((Trip t) -> AT_DOCK.indexOf(t.getStatus())).thenComparing(Trip::getId))
                 .map(this::row).toList();
@@ -50,7 +50,7 @@ public class LoaderService {
         int packages = s.stream().mapToInt(x -> firstNumber(x.getItemsLabel())).sum();
         String status = switch (t.getStatus()) { case LOADING -> "LOADING"; case LOADED -> "COMPLETE"; default -> "WAITING"; };
         String driver = t.getDriver() != null ? t.getDriver().getFullName() : v.getDriverName();
-        return new QueueRow(t.getId(), Labels.plate(v), v.getType() == VehicleType.REEFER, v.getModel(), driver, s.size(), packages,
+        return new QueueRow(t.getId(), Labels.plate(v), v.isReefer(), v.getModel(), driver, s.size(), packages,
                 Labels.pct(t.getAllocatedM3(), v.getCapacityM3()), Labels.pct(t.getAllocatedKg(), v.getCapacityKg()), status);
     }
 
@@ -60,6 +60,12 @@ public class LoaderService {
         return m.find() ? Integer.parseInt(m.group(1)) : 0;
     }
 
+    public void checkTripAccess(AppUser user, Long id) {
+        Trip t=trip(id);
+        if(user.getDepot()==null || !user.getDepot().getId().equals(t.getVehicle().getDepot().getId())) throw ApiException.forbidden("Trip belongs to another depot");
+    }
+    public void checkStopAccess(AppUser user, Long id) { checkTripAccess(user,stops.findById(id).orElseThrow(()->ApiException.notFound("Stop not found")).getTrip().getId()); }
+    public void checkItemAccess(AppUser user, Long id) { checkStopAccess(user,items.findById(id).orElseThrow(()->ApiException.notFound("Item not found")).getStop().getId()); }
     private Trip trip(Long id) { return trips.findById(id).orElseThrow(() -> ApiException.notFound("Trip not found")); }
 
     /** Opening a waiting vehicle starts its loading. */
@@ -157,6 +163,7 @@ public class LoaderService {
     public Verification verifyStop(Long stopId) {
         TripStop s = stops.findById(stopId).orElseThrow(() -> ApiException.notFound("Stop not found"));
         for (StopItem i : items.findByStopOrderByIdAsc(s)) if (i.getLoadCondition() == null) i.setLoadCondition(ItemCondition.GOOD);
+        if (items.findByStopOrderByIdAsc(s).stream().anyMatch(LoaderService::isException) && !s.isShortfallFlagged()) throw ApiException.conflict("Flag loading shortfalls before verification", null);
         s.setLoadVerified(true);
         return verification(stopId);
     }
@@ -173,7 +180,7 @@ public class LoaderService {
                 int diff = Math.max(0, i.getExpectedQty() - i.getLoadedQty());
                 adjKg += diff * i.getUnitWeightKg();
                 adjM3 += diff * i.getUnitVolumeM3();
-                shortfalls.add(shortfallText(i) + (st.isShortfallFlagged() ? " Dispatcher acknowledged. Plan adjusted." : ""));
+                shortfalls.add(shortfallText(i) + (st.isShortfallFlagged() ? " Dispatcher notified. Loaded quantities adjusted." : ""));
             }
         }
         if (t.getSealNo() == null) {
@@ -190,6 +197,7 @@ public class LoaderService {
     public DispatchView dispatch(AppUser loader, Long tripId) {
         Trip t = trip(tripId);
         DispatchView v = dispatchView(tripId);
+        if (t.getVehicle().isReefer() && !t.isPrecooled()) throw ApiException.conflict("Pre-cool refrigerated compartments before dispatch", null);
         if (!v.allVerified()) throw ApiException.conflict("Verify all " + v.totalStops() + " stops before dispatching " + v.plate() + ".", null);
         if (t.getStatus() == TripStatus.LOADING || t.getStatus() == TripStatus.WAITING) {
             t.setStatus(TripStatus.LOADED);

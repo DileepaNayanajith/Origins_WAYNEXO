@@ -83,8 +83,9 @@ function ConflictCard({ c, onDismiss }) {
 }
 
 export default function Planning() {
-  const [d, reload] = useApi('/dispatcher/planning')
   const [armed, setArmed] = useState(null)
+  const [tripNumber, setTripNumber] = useState(1)
+  const [d, reload] = useApi(`/dispatcher/planning?tripNumber=${tripNumber}`)
   const [toast, setToast] = useState(null)
   const flash = (msg, type) => { setToast({ msg, type }); setTimeout(() => setToast(null), 3200) }
 
@@ -93,9 +94,23 @@ export default function Planning() {
     if (!orderId) return
     try {
       if (orderId < 0) { await api.post('/dispatcher/planning/unassign', { orderId: -orderId }); flash('Order returned to pending assignments') }
-      else { await api.post('/dispatcher/planning/assign', { orderId, vehicleId }); flash('Order allocated — all constraints satisfied') }
+      else { await api.post('/dispatcher/planning/assign', { orderId, vehicleId, tripNumber }); flash('Order allocated — all constraints satisfied') }
     } catch (e) { flash(e.message, 'error') }
     reload()
+  }
+  const planAction = async (action) => {
+    try { const result = await api.post('/dispatcher/planning/' + action); flash(action === 'release' ? `Released ${result.tripIds.length} trips to dock` : `Allocated ${result.allocated}; deferred ${result.deferred}`) }
+    catch (e) { flash(e.message, 'error') }
+    reload()
+  }
+  const defer = async () => {
+    if (!armed) return
+    const reason = window.prompt('Reason: capacity / no reefer / window / fuel / no driver', 'capacity')
+    if (!reason) return
+    const note = window.prompt('Why defer this order? Add a note:')
+    if (!note?.trim()) return
+    try { await api.post(`/dispatcher/orders/${armed}/defer`, {reason:reason.trim().toLowerCase(),note}); setArmed(null); flash('Order deferred; store notified'); reload() }
+    catch(e) { flash(e.message,'error') }
   }
   const dismiss = async (id) => { await api.del('/dispatcher/planning/conflicts/' + id); reload() }
 
@@ -103,7 +118,14 @@ export default function Planning() {
   const conflicts = d?.conflicts || []
   return (
     <Shell active="planning" title="Daily Workspace" subtitle="Drag-and-assign outlet shipments, verify vehicle limits, and balance fuel quota" counts={d?.counts}
-      bodyClass="flex-row gap-[17.778px]">
+      bodyClass="flex-row gap-[17.778px]" toolbar={(<div className="flex flex-wrap gap-2 mb-3 w-full shrink-0">
+        <label className="text-sm">Assign to <select aria-label="Trip number" value={tripNumber} onChange={e=>setTripNumber(Number(e.target.value))}><option value={1}>Trip 1</option><option value={2}>Trip 2</option></select></label>
+        <button className="rounded-lg bg-white px-3 py-2 text-sm" onClick={()=>planAction('auto-allocate')}>Auto-allocate</button>
+        <button className="rounded-lg bg-[#e8453c] text-white px-3 py-2 text-sm" onClick={()=>planAction('release')}>Release plan to dock</button>
+        <button className="rounded-lg bg-white px-3 py-2 text-sm" disabled={!armed} onClick={defer}>Defer selected order</button>
+      </div>)}>
+
+
       <div className="flex flex-col gap-[14.222px] h-full items-start shrink-0 w-[373.333px]">
         <p className="font-bold leading-[normal] text-[#1e2229] text-[14.222px] whitespace-nowrap">Pending Route Assignments</p>
         <div className="flex flex-[1_0_0] flex-col gap-[10.667px] items-start min-h-px w-full overflow-y-auto no-scrollbar">
@@ -111,7 +133,7 @@ export default function Planning() {
             <Card key={g.district} className="flex flex-col gap-[10.667px] items-start p-[14.222px] shrink-0 w-full">
               <div className="flex items-center justify-between leading-[normal] w-full whitespace-nowrap">
                 <p className="font-bold text-[#1e2229] text-[12.444px]">{g.district} District</p>
-                <p className="font-semibold text-[#8d9aab] text-[9.778px]">{g.orders.length} OUTLET{g.orders.length === 1 ? '' : 'S'}</p>
+                <p className="font-semibold text-[#8d9aab] text-[9.778px]">{g.orders.length} ORDER{g.orders.length === 1 ? '' : 'S'}</p>
               </div>
               <div className="flex flex-col gap-[7.111px] items-start w-full">
                 {g.orders.map((o) => (

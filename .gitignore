@@ -11,3 +11,6 @@ frontend/.env.production
 
 frontend/test-results/
 frontend/playwright-report/
+
+.env
+*.private.json

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Shell, { MobileHeader } from './Shell'
 import Icon from '../../components/Icon'
 import { useCachedApi, lastTrip } from '../../lib/offline'
@@ -9,14 +9,16 @@ import { api } from '../../lib/api'
 const CHIP = { COMPLETED: ['#eaf9f1', '#2ec170', 'COMPLETED'], CURRENT: ['#fdf0ef', '#e8453c', 'CURRENT'], UPCOMING: ['#e4e8ee', '#56616d', 'UPCOMING'] }
 
 export default function Route({ id }) {
+  const [empty, setEmpty] = useState(false)
   // "/driver/trip/current" resolves to today's active trip
   useEffect(() => {
     if (id !== 'current') return
-    api.get('/driver/home').then((h) => navigate('/driver/trip/' + (h.activeTripId || h.trips[0]?.id), { replace: true })).catch(() => { if (lastTrip.get()) navigate('/driver/trip/' + lastTrip.get(), { replace: true }) })
+    api.get('/driver/home').then((h) => { const next = h.activeTripId || h.trips[0]?.id; if (next) navigate('/driver/trip/' + next, { replace: true }); else setEmpty(true) }).catch(() => { if (/^\d+$/.test(lastTrip.get() || '')) navigate('/driver/trip/' + lastTrip.get(), { replace: true }); else setEmpty(true) })
   }, [id])
-  const [t] = useCachedApi(id === 'current' ? null : '/driver/trips/' + id)
-  useEffect(() => { if (id !== 'current') lastTrip.set(id) }, [id])
-  if (id === 'current') return <Shell active="routes" />
+  const [t, , , , error] = useCachedApi(id === 'current' ? null : '/driver/trips/' + id)
+  useEffect(() => { if (t?.id && String(t.id) === String(id)) lastTrip.set(id) }, [id,t])
+  if (id === 'current') return <Shell active="routes" responsive><div className="driver-empty"><h1>{empty ? 'No trips assigned yet' : 'Loading your routes…'}</h1><p>Your dispatcher will release your delivery runs to the dock.</p><button onClick={()=>navigate('/driver')}>Back to Home</button></div></Shell>
+  if (error && !t) return <Shell active="routes" responsive><div className="driver-empty"><h1>Route unavailable</h1><p>{error.message}</p><button onClick={()=>navigate('/driver')}>Back to Home</button></div></Shell>
   return (
     <Shell active="routes" header={<MobileHeader title={`Trip ${t?.number ?? ''}: ${t?.name ?? ''}`} subtitle={t && `Progress: ${t.completed} of ${t.total} stops completed`} back="/driver" />}>
       <div className="absolute left-[16px] top-[123px] w-[358px] bottom-[130px] flex flex-col gap-[12px] overflow-y-auto no-scrollbar">

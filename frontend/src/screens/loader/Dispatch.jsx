@@ -8,7 +8,7 @@ import { fmtNum } from '../../lib/fig'
 
 // Figma: "Loader iPad Pro 11\" - 5" — Ready for Dock Dispatch
 export default function Dispatch({ id }) {
-  const [d, , { setData }] = useApi('/loader/trips/' + id + '/dispatch')
+  const [d, , { setData, error }] = useApi('/loader/trips/' + id + '/dispatch')
   const [toast, setToast] = useState(null)
   const flash = (msg, type) => { setToast({ msg, type }); setTimeout(() => setToast(null), 2600) }
   const go = async () => {
@@ -16,6 +16,7 @@ export default function Dispatch({ id }) {
     catch (e) { flash(e.message, 'error') }
   }
   const ok = d?.allVerified
+  if (error) return <Shell title="Trip unavailable"><div className="p-6"><p role="alert">{error.message}</p><button onClick={() => navigate('/loader')} className="mt-4 rounded-lg bg-white px-5 py-3">Back to queue</button></div></Shell>
   return (
     <Shell title="Ready for Dock Dispatch">
       {d && <>

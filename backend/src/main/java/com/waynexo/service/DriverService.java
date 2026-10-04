@@ -34,15 +34,15 @@ public class DriverService {
 
     @Transactional(readOnly = true)
     public Home home(AppUser driver) {
-        List<Trip> list = trips.findByTripDateAndDriverOrderByNumberAsc(clock.today(), driver);
+        List<Trip> list = trips.findAll().stream().filter(t -> t.getDriver() != null && t.getDriver().getId().equals(driver.getId()) && !t.getTripDate().isBefore(clock.today())).sorted(Comparator.comparing(Trip::getTripDate).thenComparing(Trip::getNumber)).toList();
         Vehicle v = driver.getVehicleCode() == null ? null : vehicles.findByCode(driver.getVehicleCode()).orElse(null);
         if (v == null && !list.isEmpty()) v = list.get(0).getVehicle();
 
         Trip focus = list.stream().filter(t -> t.getStatus() != TripStatus.COMPLETED).findFirst().orElse(null);
         VehicleInfo info = null;
         if (v != null) {
-            double alloc = focus == null ? 0 : focus.getAllocatedKg();
-            info = new VehicleInfo(Labels.plate(v), v.getType() == VehicleType.REEFER ? "CHILLED FLEET" : v.getType() == VehicleType.VAN ? "VAN FLEET" : "DRY FLEET",
+            double alloc = focus == null ? orders.findByVehicleAndStatus(v, OrderStatus.ASSIGNED).stream().mapToDouble(StockOrder::getWeightKg).sum() : focus.getAllocatedKg();
+            info = new VehicleInfo(Labels.plate(v), v.isReefer() ? "CHILLED FLEET" : v.getType() == VehicleType.VAN ? "VAN FLEET" : "DRY FLEET",
                     v.getDepot().getName(), Labels.num1(alloc / 1000.0) + " Tons (" + Labels.pct(alloc, v.getCapacityKg()) + "%)");
         }
         List<TripCard> cards = new ArrayList<>();
@@ -75,14 +75,17 @@ public class DriverService {
         if (t.getStatus() == TripStatus.ACTIVE) return trip(driver, id);
         if (t.getStatus() != TripStatus.LOADED)
             throw ApiException.conflict(Labels.plate(t.getVehicle()) + " has not been released by the dock yet. Ask the loader to verify and dispatch the vehicle.", null);
+        if(trips.findByTripDateAndVehicleOrderByNumberAsc(t.getTripDate(),t.getVehicle()).stream().anyMatch(previous->previous.getNumber()<t.getNumber() && previous.getStatus()!=TripStatus.COMPLETED)) throw ApiException.conflict("Complete the earlier vehicle trip before starting this run",null);
         t.setStatus(TripStatus.ACTIVE);
         t.setStartedAt(clock.now());
         Vehicle v = t.getVehicle();
         v.setState(VehicleState.EN_ROUTE);
-        v.setTripsToday(v.getTripsToday() + 1);
+        v.setTripsToday((int)trips.findByTripDateAndVehicleOrderByNumberAsc(t.getTripDate(),v).stream().filter(run->run.getStartedAt()!=null).count());
+        java.time.LocalDate monday=t.getTripDate().minusDays(t.getTripDate().getDayOfWeek().getValue()-1);
+        v.setFuelUsedL(trips.findAll().stream().filter(run->run.getVehicle().getId().equals(v.getId()) && run.getStartedAt()!=null && !run.getTripDate().isBefore(monday) && run.getTripDate().isBefore(monday.plusWeeks(1))).mapToDouble(Trip::getReservedFuelL).sum());
         List<TripStop> list = stops.findByTripOrderBySeqAsc(t);
         list.stream().filter(s -> s.getStatus() == StopStatus.UPCOMING).findFirst().ifPresent(s -> s.setStatus(StopStatus.CURRENT));
-        for (TripStop s : list) if (s.getOrder() != null) s.getOrder().setStatus(OrderStatus.IN_TRANSIT);
+        for (StockOrder o : orders.findByTrip(t)) o.setStatus(OrderStatus.IN_TRANSIT);
         feed(driver, v.getCode(), Severity.INFO, "Started " + t.getName() + " (" + list.size() + " stops).");
         return trip(driver, id);
     }
@@ -125,6 +128,7 @@ public class DriverService {
         TripStop s = ownStop(driver, id);
         Trip t = s.getTrip();
         if (s.getStatus() == StopStatus.COMPLETED) return next(t);   // idempotent (offline re-sync)
+        if (t.getStatus()!=TripStatus.ACTIVE || s.getStatus()!=StopStatus.CURRENT) throw ApiException.conflict("Start the trip and complete stops in route order",null);
         if (req.recipientName() == null || req.recipientName().isBlank()) throw ApiException.badRequest("Enter the recipient's full name");
         if (req.signature() == null || req.signature().isBlank()) throw ApiException.badRequest("Recipient signature is required");
 
@@ -140,6 +144,7 @@ public class DriverService {
         }
         s.setStatus(StopStatus.COMPLETED);
         s.setCompletedAt(clock.now());
+        for (StockOrder o : orders.findByTrip(t)) if(o.getOutlet().getId().equals(s.getOutlet().getId())) o.setStatus(OrderStatus.DELIVERED);
         if (s.getArrivedAt() == null) s.setArrivedAt(clock.now());
         s.setRecipientName(req.recipientName().trim());
         s.setSignature(req.signature());
@@ -192,13 +197,14 @@ public class DriverService {
     /** Replays deliveries/exceptions captured while the driver was offline. Safe to call repeatedly. */
     public SyncResult sync(AppUser driver, SyncRequest req) {
         int applied = 0, skipped = 0;
+        List<String> accepted=new ArrayList<>(), rejected=new ArrayList<>();
         if (req.pods() != null) for (QueuedPod q : req.pods()) {
-            try { pod(driver, q.stopId(), q.pod()); applied++; } catch (ApiException e) { skipped++; }
+            try { pod(driver, q.stopId(), q.pod()); applied++; if(q.pod().clientId()!=null)accepted.add(q.pod().clientId()); } catch (ApiException e) { skipped++; if(q.pod().clientId()!=null)rejected.add(q.pod().clientId()); }
         }
         if (req.exceptions() != null) for (ExceptionRequest e : req.exceptions()) {
-            try { reportException(driver, e); applied++; } catch (ApiException ex) { skipped++; }
+            try { reportException(driver, e); applied++; if(e.clientId()!=null)accepted.add(e.clientId()); } catch (ApiException ex) { skipped++; if(e.clientId()!=null)rejected.add(e.clientId()); }
         }
-        return new SyncResult(applied, skipped);
+        return new SyncResult(applied, skipped,accepted,rejected);
     }
 
     private void feed(AppUser driver, String vehicle, Severity sev, String message) {

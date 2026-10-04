@@ -10,7 +10,7 @@ const TEMP = { FROZEN: '#8a5cf5', CHILLED: '#1d89e8', AMBIENT: '#56616d', AMBIEN
 const COND = { GOOD: ['#eaf9f1', '#2ec170'], DAMAGED: ['#fef3c7', '#f59e0b'], SHORT: ['#fdf0ef', '#e8453c'], MISSING: ['#fdf0ef', '#e8453c'] }
 
 export default function Verify({ id }) {
-  const [v, , { setData }] = useApi('/loader/stops/' + id + '/verification')
+  const [v, , { setData, error }] = useApi('/loader/stops/' + id + '/verification')
   const [toast, setToast] = useState(null)
   const flash = (msg, type) => { setToast({ msg, type }); setTimeout(() => setToast(null), 2600) }
   const upd = async (item, patch) => setData(await api.put('/loader/items/' + item.id, patch))
@@ -20,6 +20,7 @@ export default function Verify({ id }) {
     flash('Stop verified ✓')
     setTimeout(() => navigate(r.nextStopId ? '/loader/verify/' + r.nextStopId : '/loader/dispatch/' + r.tripId), 700)
   }
+  if (error) return <Shell title="Trip unavailable"><div className="p-6"><p role="alert">{error.message}</p><button onClick={() => navigate('/loader')} className="mt-4 rounded-lg bg-white px-5 py-3">Back to queue</button></div></Shell>
   return (
     <Shell title="Item Verification Station" height={896}>
       {v && <>

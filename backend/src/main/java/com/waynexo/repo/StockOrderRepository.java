@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface StockOrderRepository extends JpaRepository<StockOrder, Long> {
+    List<StockOrder> findByTrip(Trip trip);
     Optional<StockOrder> findByCode(String code);
     long countByPlacedDate(LocalDate date);
     List<StockOrder> findByPlacedDateOrderByIdAsc(LocalDate date);

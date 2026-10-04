@@ -25,7 +25,7 @@ export default function Schedule() {
           </div>
           <p className="absolute left-[90px] top-[21px] font-bold text-[#e8453c] text-[11.6px] uppercase">Today's {n.brand === 'FRESH' ? 'Chilled' : ''} Dispatch Expected</p>
           <p className="absolute left-[90px] top-[39px] font-bold text-[#1e2229] text-[17.5px] leading-[22px] whitespace-nowrap">
-            {n.brand === 'FRESH' ? 'Fresh daily order' : 'Your order'} {n.minutes > 0 ? `arrives in approx ${eta(n.minutes)}` : 'is arriving now'} (ETA:{n.eta})
+            {n.brand === 'FRESH' ? 'Fresh daily order' : 'Your order'} {n.minutes > 0 ? `arrives in approx ${eta(n.minutes)}` : n.minutes < 0 ? `is ${Math.abs(n.minutes)} minutes past its planned ETA` : 'is arriving now'} (ETA:{n.eta})
           </p>
           <p className="absolute left-[90px] top-[65px] text-[#56616d] text-[12.4px] whitespace-nowrap">
             {n.vehicleLabel} • Driver: {n.driver} • Chilled Weight: {n.weightKg} kg • Chilled Volume: {n.volumeM3} m³

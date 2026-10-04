@@ -12,7 +12,7 @@ public final class StoreDtos {
 
     public record CartItem(Long productId, int qty) {}
     public record PlaceOrder(String deliveryDate, List<CartItem> items) {}
-    public record Placed(Long id, String code, String deliveryLabel, double weightKg, double volumeM3, double value) {}
+    public record Placed(Long id, String code, String deliveryLabel, double weightKg, double volumeM3, double value, List<String> orderCodes) {}
 
     public record HistoryRow(Long id, String code, String placed, String brand, String itemsSummary, int itemCount, String deliveryLabel,
                              boolean deliveryAlert, String status, String action, Long deferralId) {}

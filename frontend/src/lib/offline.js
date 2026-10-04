@@ -14,6 +14,7 @@ const write = (k, v) => { if (!accountId) return; try { localStorage.setItem(sco
 export const outbox = {
   all: () => read(QKEY, []),
   push: (item) => { write(QKEY, [...outbox.all(), { ...item, clientId: crypto.randomUUID?.() || String(Date.now() + Math.random()), at: Date.now() }]); notify() },
+  remove: (ids) => { write(QKEY, outbox.all().filter(item => !ids.includes(item.clientId))); notify() },
   clear: () => { write(QKEY, []); notify() },
 }
 export const lastSync = () => read(SKEY, null)
@@ -27,13 +28,14 @@ export async function flush() {
   write(SKEY, { at: Date.now() })
   if (!items.length) return true
   try {
-    await api.post('/driver/sync', {
+    const result = await api.post('/driver/sync', {
       pods: items.filter((i) => i.type === 'pod').map((i) => ({ stopId: i.stopId, pod: { ...i.payload, clientId: i.clientId } })),
       exceptions: items.filter((i) => i.type === 'exception').map((i) => ({ ...i.payload, clientId: i.clientId })),
     })
     if (accountId !== owner) return false
-    outbox.clear()
-    return true
+    const accepted = result.acceptedClientIds || (result.skipped === 0 ? items.map(item => item.clientId) : [])
+    outbox.remove(accepted)
+    return outbox.all().length === 0
   } catch { return false } finally { notify() }
 }
 
@@ -64,14 +66,15 @@ export function useConnectivity() {
 export function useCachedApi(path) {
   const [data, setData] = useState(() => (path ? read(CKEY + path, null) : null))
   const [offline, setOffline] = useState(false)
+  const [error, setError] = useState(null)
   const load = useCallback(async () => {
     if (!path) return
     const owner = accountId
-    try { const d = await api.get(path); if (owner !== accountId) return; setData(d); write(CKEY + path, d); setOffline(false) }
-    catch (e) { if (e.status === 0) { setOffline(true); window.dispatchEvent(new Event('waynexo:unreachable')) } else throw e }
+    try { const d = await api.get(path); if (owner !== accountId) return; setData(d); write(CKEY + path, d); setOffline(false); setError(null) }
+    catch (e) { setError(e); if (e.status === 0) { setOffline(true); window.dispatchEvent(new Event('waynexo:unreachable')) } else throw e }
   }, [path])
   useEffect(() => { load().catch(() => {}) }, [load])
-  return [data, load, offline, setData]
+  return [data, load, offline, setData, error]
 }
 
 /** Optimistically mark a stop as delivered in the cached trip/stop data. */
@@ -79,6 +82,6 @@ export function patchCache(path, fn) { const d = read(CKEY + path, null); if (d)
 
 /** Remembers the trip the driver last opened so it is available offline. */
 export const lastTrip = {
-  get: () => read('waynexo.driver.lastTrip', null),
-  set: (id) => write('waynexo.driver.lastTrip', id),
+  get: () => { const id=read('waynexo.driver.lastTrip', null); return /^\d+$/.test(String(id || '')) ? id : null },
+  set: (id) => { if (/^\d+$/.test(String(id || ''))) write('waynexo.driver.lastTrip', id) },
 }

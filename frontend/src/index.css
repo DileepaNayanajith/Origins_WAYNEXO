@@ -63,3 +63,37 @@ body {
 .role-display-pc button, .role-display-pc input, .role-display-pc select { min-height:36px; }
 .role-display-tv nav a { min-height:44px; }
 @media(prefers-reduced-motion:reduce) { .role-display * { scroll-behavior:auto; } }
+
+/* Phone layouts use the same authenticated workflows with normal document flow. */
+@media (max-width: 1023px) {
+ .phone-role { min-height: 100dvh; padding-bottom: env(safe-area-inset-bottom); overflow-x: hidden; }
+ .phone-role [class*="absolute"] { position: relative !important; inset: auto !important; transform: none !important; }
+ .phone-role > div, .phone-role header, .phone-role main { width: 100% !important; height: auto !important; }
+ .phone-role header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 16px; }
+ .phone-role header nav { display: flex; width: 100%; flex-wrap: wrap; gap: 6px; }
+ .phone-role header > img { width: 36px; height: 36px; }
+ .phone-role header > div { width: auto !important; height: auto !important; }
+ .phone-role main { display: flex; flex-direction: column; gap: 16px; padding: 16px; }
+ .phone-role main div { max-width: 100%; }
+ .phone-role main > div { width: 100% !important; height: auto !important; min-height: 0; bottom: auto; padding: 16px; }
+ .phone-role main [class*="absolute"] { max-width: 100%; width: auto !important; height: auto !important; margin: 4px 0; }
+ .phone-role main [class*="flex"] { flex-wrap: wrap; }
+ .phone-role main [class*="overflow"] { overflow: visible; }
+ .phone-role main [class*="whitespace-nowrap"] { white-space: normal; }
+ .phone-role main [class*="truncate"] { white-space: normal; overflow: visible; }
+ .phone-role main [class*="shrink-0"] { flex-shrink: 1; }
+ .phone-role button, .phone-role input, .phone-role select, .phone-role a { min-height: 44px; }
+ .phone-role main > button { width: 100% !important; padding: 12px; }
+ .phone-role main [class*="bottom-"] { position: relative !important; }
+ .phone-role main canvas { max-width: 100%; touch-action: none; }
+ .phone-role table { display: block; overflow-x: auto; }
+}
+
+@media (max-width:1023px) {
+ .phone-role main div[class*="h-["] { height:auto !important; }
+ .phone-role main [class*="grid-cols-"] { grid-template-columns: minmax(0,1fr) !important; }
+ .phone-role main [class*="overflow-hidden"][class*="rounded-full"] { height:6px !important; }
+ .phone-role main p, .phone-role main span { overflow-wrap:anywhere; }
+}
+
+@media (max-width:1023px) { .phone-role button, .phone-role a { min-width:44px; } }
