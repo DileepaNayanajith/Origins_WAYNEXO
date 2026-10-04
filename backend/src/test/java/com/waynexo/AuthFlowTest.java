@@ -42,6 +42,32 @@ class AuthFlowTest {
             .andExpect(status().isOk()).andExpect(jsonPath("$.user.role").value(role.name())).andReturn();
         return json.readTree(r.getResponse().getContentAsString()).get("token").asText();
     }
+    @Test void dispatcherCreatesVehicleDriverWithWorkingProtectedLogin() throws Exception {
+        Long vehicleId = vehicles.findByCode("V1").orElseThrow().getId();
+        String path = "/api/dispatcher/fleet/" + vehicleId + "/driver";
+        String body = json.writeValueAsString(Map.of("username", "new-driver", "fullName", "New Driver", "password", "new-driver-pass-123"));
+        mvc.perform(post(path).header("Authorization", "Bearer " + login(Role.LOADER)).contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isForbidden());
+        String dispatcher = "Bearer " + login(Role.DISPATCHER);
+        mvc.perform(post(path).header("Authorization", dispatcher).contentType(MediaType.APPLICATION_JSON)
+            .content(body.replace("new-driver-pass-123", "short"))).andExpect(status().isBadRequest());
+        mvc.perform(post(path).header("Authorization", dispatcher).contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.vehicleCode").value("V1"));
+        AppUser created = users.findByUsernameIgnoreCase("new-driver").orElseThrow();
+        assertEquals(Role.DRIVER, created.getRole());
+        assertTrue(hasher.matches("new-driver-pass-123", created.getPasswordHash()));
+        assertEquals("New Driver", vehicles.findById(vehicleId).orElseThrow().getDriverName());
+        mvc.perform(post(path).header("Authorization", dispatcher).contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isConflict());
+        String token = json.readTree(mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+            .content(json.writeValueAsString(Map.of("username", "new-driver", "password", "new-driver-pass-123"))))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.user.role").value("DRIVER"))
+            .andReturn().getResponse().getContentAsString()).get("token").asText();
+        mvc.perform(get("/api/auth/setup").header("Authorization", "Bearer " + token))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.fields.length()").value(0));
+        mvc.perform(get("/api/dispatcher/overview").header("Authorization", "Bearer " + token)).andExpect(status().isForbidden());
+    }
+
     @Test void everyRoleAuthenticatesPersistsAndRejectsOtherRoles() throws Exception {
         Map<Role,String> areas = Map.of(Role.DRIVER,"/api/driver/home",Role.LOADER,"/api/loader/queue",Role.STORE_MANAGER,"/api/store/catalog",Role.DISPATCHER,"/api/dispatcher/overview");
         for (Role role : Role.values()) {
